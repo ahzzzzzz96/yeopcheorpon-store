@@ -212,6 +212,18 @@
 .admin-scope .table-card{grid-area:table;}
 }
 .admin-scope .ov-section{grid-column:1 / -1;}
+.admin-scope .period-row{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;}
+.admin-scope .period-row input[type="date"]{
+  display:block;margin-top:5px;padding:9px 10px;border-radius:9px;
+  border:1px solid var(--line);font-size:14px;color:var(--ink);font-family:inherit;background:#FCFBFE;
+}
+.admin-scope .unit-toggle{display:flex;gap:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;}
+.admin-scope .unit-btn{
+  border:none;background:#fff;color:var(--sub);padding:10px 18px;font-size:13.5px;font-weight:700;
+  cursor:pointer;font-family:inherit;border-right:1px solid var(--line);
+}
+.admin-scope .unit-btn:last-child{border-right:none;}
+.admin-scope .unit-btn.active{background:var(--purple);color:#fff;}
 .admin-scope .big-table{font-size:15px;}
 .admin-scope .big-table thead th{font-size:13.5px;padding:13px 12px;}
 .admin-scope .big-table tbody td{padding:15px 12px;font-size:16px;font-weight:600;}
@@ -946,97 +958,72 @@ function fieldNum(id, label, val){
     <input type="number" id="${id}" min="0" value="${val}">
   </label>`;
 }
+let STORE_PERIOD = null;
+
+function defaultStorePeriod(){
+  return { start: toDateStr(new Date(Date.now() - 13*86400000)), end: todayStr(), unit: 'day' };
+}
+function bucketKeyOf(dateStr, unit){
+  if(unit === 'month') return dateStr.slice(0,7);
+  if(unit === 'week'){
+    const d = new Date(dateStr + 'T00:00:00');
+    const monday = new Date(d);
+    monday.setDate(d.getDate() - ((d.getDay()+6)%7));
+    return toDateStr(monday);
+  }
+  return dateStr;
+}
+function bucketLabelOf(key, unit){
+  if(unit === 'month'){ const p = key.split('-'); return Number(p[1]) + '월'; }
+  if(unit === 'week') return mdLabel(key) + '주';
+  return mdLabel(key);
+}
+function buildBuckets(dates, unit){
+  const keys = [], seen = {};
+  dates.forEach(d => { const k = bucketKeyOf(d, unit); if(!seen[k]){ seen[k] = 1; keys.push(k); } });
+  return keys;
+}
+
 function storeViewHTML(store){
-  const today = todayStr();
+  const p = STORE_PERIOD || (STORE_PERIOD = defaultStorePeriod());
   return `
-  <section class="card input-card">
-    <h2>일일보고 입력 <span class="store-chip">${esc(store)}</span></h2>
-    <p class="hint" style="margin:0 0 14px">점장이 매장 입력에서 제출한 내용이 자동으로 채워져요. 필요하면 값을 직접 수정하고 저장할 수 있어요.</p>
-
-    <label class="f-label">날짜
-      <input type="date" id="f-date" value="${today}">
-    </label>
-
-    <div class="btn-row">
-      <button id="btn-load" class="btn btn-ghost">다른 날짜 불러오기</button>
-      <button id="btn-clear" class="btn btn-ghost">비우기</button>
-    </div>
-
-    <div class="fieldset-title">문의량</div>
-    <div class="form-grid form-grid-6">
-      ${fieldNum('f-inqPhone','전화',0)}
-      ${fieldNum('f-inqText','문자',0)}
-      ${fieldNum('f-inqWalkin','카톡플친',0)}
-      ${fieldNum('f-inqNaver','네이버',0)}
-      ${fieldNum('f-inqKarrot','당근',0)}
-      ${fieldNum('f-inqEtc','기타',0)}
-    </div>
-
-    <div class="fieldset-title">내방 · 개통</div>
-    <div class="form-grid form-grid-6">
-      ${fieldNum('f-visitors','내방인원',0)}
-      ${fieldNum('f-visitRate','유입률(%)',0)}
-      ${fieldNum('f-actWireless','무선',0)}
-      ${fieldNum('f-actWired','유선',0)}
-      ${fieldNum('f-actUsim','유심',0)}
-      ${fieldNum('f-actRental','렌탈',0)}
-      ${fieldNum('f-convRate','전환율(%)',0)}
-      ${fieldNum('f-notActivated','미개통건',0)}
-    </div>
-
-    <div class="fieldset-title">매출 · 운영</div>
-    <div class="form-grid form-grid-3">
-      ${fieldNum('f-sales','일매출(원)',0)}
-      <label class="f-label">시세표 업로드
-        <select id="f-priceSheet"><option>미완료</option><option>완료</option></select>
-      </label>
-      <div class="f-label">홍보문자발송(이번주)
-        <div class="pair-input">
-          <input type="number" id="f-promoDone" min="0" value="0"> / <input type="number" id="f-promoTarget" min="1" value="4">
-        </div>
+  <section class="card ov-section">
+    <div class="card-head">
+      <h2>📅 분석 기간 <span class="store-chip">${esc(store)}</span></h2>
+      <div class="btn-row" style="margin:0">
+        <button class="btn btn-outline small" data-quick="7">최근 7일</button>
+        <button class="btn btn-outline small" data-quick="30">최근 30일</button>
+        <button class="btn btn-outline small" data-quick="month">이번 달</button>
+        <button class="btn btn-outline small" data-quick="lastmonth">지난 달</button>
       </div>
     </div>
-
-    <details class="fieldset-collapse">
-      <summary>판매유형 상세 (선택 입력)</summary>
-      <div class="form-grid form-grid-3">
-        ${fieldNum('f-stNaver','네이버',0)}
-        ${fieldNum('f-stKarrot','당근',0)}
-        ${fieldNum('f-stVisit','일반방문',0)}
-        ${fieldNum('f-stExisting','기존고객',0)}
-        ${fieldNum('f-stSideApp','옆커폰어플',0)}
-        ${fieldNum('f-stReferral','고객소개',0)}
-        ${fieldNum('f-stWalkin','즉힌',0)}
-        ${fieldNum('f-stPriceVisit','시세표방문',0)}
-        ${fieldNum('f-stAdVisit','광고방문',0)}
+    <div class="period-row">
+      <label class="f-label" style="margin:0">시작일 <input type="date" id="sp-start" value="${p.start}"></label>
+      <label class="f-label" style="margin:0">종료일 <input type="date" id="sp-end" value="${p.end}"></label>
+      <div class="unit-toggle">
+        <button class="unit-btn ${p.unit==='day'?'active':''}" data-unit="day">일별</button>
+        <button class="unit-btn ${p.unit==='week'?'active':''}" data-unit="week">주별</button>
+        <button class="unit-btn ${p.unit==='month'?'active':''}" data-unit="month">월별</button>
       </div>
-    </details>
-
-    <label class="f-label">놓친 고객 메모
-      <textarea id="f-lostNote" rows="2" placeholder="놓친고객없음"></textarea>
-    </label>
-
-    <div class="btn-row end">
-      <button id="btn-save" class="btn btn-primary">💾 저장하기</button>
     </div>
   </section>
 
-  <section class="card charts-card">
-    <h2>추이 &amp; 통계</h2>
+  <section class="card ov-section">
+    <h2>📊 추이 &amp; 통계</h2>
     <div class="chart-grid">
-      <div class="chart-box"><h3>일매출 추이</h3><canvas id="chart-sales"></canvas></div>
-      <div class="chart-box"><h3>문의 채널 구성</h3><canvas id="chart-inquiry"></canvas></div>
-      <div class="chart-box"><h3>개통 유형 구성</h3><canvas id="chart-activation"></canvas></div>
-      <div class="chart-box"><h3>판매유형 (누적 합계)</h3><canvas id="chart-saletype"></canvas></div>
+      <div class="chart-box" style="height:260px"><h3>매출 추이</h3><canvas id="chart-sales"></canvas></div>
+      <div class="chart-box" style="height:260px"><h3>문의 채널 구성</h3><canvas id="chart-inquiry"></canvas></div>
+      <div class="chart-box" style="height:260px"><h3>개통 유형 구성</h3><canvas id="chart-activation"></canvas></div>
+      <div class="chart-box" style="height:260px"><h3>판매유형 (기간 합계)</h3><canvas id="chart-saletype"></canvas></div>
     </div>
   </section>
 
   <section class="card ov-section" id="store-analysis"></section>
 
-  <section class="card table-card">
+  <section class="card ov-section">
     <div class="card-head">
-      <h2>일자별 통계표</h2>
-      <div class="btn-row">
+      <h2>📋 일자별 상세표</h2>
+      <div class="btn-row" style="margin:0">
         <button id="btn-csv" class="btn btn-outline small">CSV 내보내기</button>
         <button id="btn-remove-store" class="btn btn-ghost small danger">매장 삭제</button>
       </div>
@@ -1047,7 +1034,7 @@ function storeViewHTML(store){
           <tr>
             <th>날짜</th><th>보고</th><th>총문의</th><th>전화</th><th>문자</th><th>카톡플친</th><th>네이버</th><th>당근</th>
             <th>내방인원</th><th>개통건</th><th>미개통</th><th>개통률</th><th>일매출</th>
-            <th>무선</th><th>유선</th><th>유심</th><th>렌탈</th><th>시세표</th><th>홍보문자</th><th></th>
+            <th>무선</th><th>유선</th><th>유심</th><th>렌탈</th><th>시세표</th><th>홍보문자</th>
           </tr>
         </thead>
         <tbody id="history-body"></tbody>
@@ -1057,49 +1044,70 @@ function storeViewHTML(store){
 }
 
 async function renderStoreView(store){
+  if(!STORE_PERIOD) STORE_PERIOD = defaultStorePeriod();
   const main = document.getElementById('main');
   main.innerHTML = storeViewHTML(store);
-  document.getElementById('btn-load').onclick = async () => {
-    const date = document.getElementById('f-date').value;
-    if(!date) return;
-    const rep = await loadReport(store, date);
-    if(rep){ fillFormFromData(rep); toast(`${date} 데이터를 불러왔어요`); }
-    else { clearForm(store); toast(`${date}에는 저장된 데이터가 없어요. 새로 입력하세요.`); }
-  };
-  document.getElementById('btn-clear').onclick = () => clearForm(store);
-  document.getElementById('btn-save').onclick = async () => {
-    const date = document.getElementById('f-date').value;
-    if(!date){ toast('날짜를 선택해주세요', true); return; }
-    const data = collectFormData(store);
-    const ok = await saveReportData(store, date, data);
-    if(ok){
-      toast(`${date} 저장 완료!`);
-      await renderHistoryAndCharts(store);
-    }
-  };
+
   document.getElementById('btn-csv').onclick = () => exportCSV(store);
   document.getElementById('btn-remove-store').onclick = () => removeStore(store);
 
-  const todayRep = await loadReport(store, today);
-  if(todayRep) fillFormFromData(todayRep);
+  const startEl = document.getElementById('sp-start');
+  const endEl = document.getElementById('sp-end');
+  startEl.onchange = () => { STORE_PERIOD.start = startEl.value; renderHistoryAndCharts(store); };
+  endEl.onchange = () => { STORE_PERIOD.end = endEl.value; renderHistoryAndCharts(store); };
+
+  main.querySelectorAll('[data-quick]').forEach(b => {
+    b.onclick = () => {
+      const q = b.dataset.quick;
+      const now = new Date();
+      if(q === '7' || q === '30'){
+        STORE_PERIOD.end = todayStr();
+        STORE_PERIOD.start = toDateStr(new Date(Date.now() - (Number(q)-1)*86400000));
+      } else if(q === 'month'){
+        STORE_PERIOD.start = toDateStr(new Date(now.getFullYear(), now.getMonth(), 1));
+        STORE_PERIOD.end = todayStr();
+      } else {
+        STORE_PERIOD.start = toDateStr(new Date(now.getFullYear(), now.getMonth()-1, 1));
+        STORE_PERIOD.end = toDateStr(new Date(now.getFullYear(), now.getMonth(), 0));
+      }
+      startEl.value = STORE_PERIOD.start;
+      endEl.value = STORE_PERIOD.end;
+      renderHistoryAndCharts(store);
+    };
+  });
+
+  main.querySelectorAll('[data-unit]').forEach(b => {
+    b.onclick = () => {
+      STORE_PERIOD.unit = b.dataset.unit;
+      main.querySelectorAll('[data-unit]').forEach(x => {
+        if(x === b) x.classList.add('active'); else x.classList.remove('active');
+      });
+      renderHistoryAndCharts(store);
+    };
+  });
 
   await renderHistoryAndCharts(store);
 }
 
 async function renderHistoryAndCharts(store){
-  const reports = await loadAllReportsForStore(store);
+  const all = await loadAllReportsForStore(store);
+  const dates = dateRangeArray(STORE_PERIOD.start, STORE_PERIOD.end);
+  const inSet = {};
+  dates.forEach(d => { inSet[d] = 1; });
+  const reports = all.filter(r => inSet[r.date]);
+
   renderHistoryTable(store, reports);
-  renderStoreCharts(store, reports);
+  renderStoreCharts(store, reports, dates, STORE_PERIOD.unit);
 
   const anaEl = document.getElementById('store-analysis');
   if(anaEl){
     anaEl.innerHTML = '<p class="hint">진단 계산 중...</p>';
-    const all = [];
+    const bench = [];
     for(const s of STORES){
-      const rs = (s === store) ? reports : await loadAllReportsForStore(s);
-      all.push(...rs);
+      const rs = (s === store) ? all : await loadAllReportsForStore(s);
+      rs.forEach(r => { if(inSet[r.date]) bench.push(r); });
     }
-    anaEl.innerHTML = storeAnalysisHTML(store, reports, aggregateReports(all));
+    anaEl.innerHTML = storeAnalysisHTML(store, reports, aggregateReports(bench));
   }
 }
 
@@ -1107,7 +1115,7 @@ function renderHistoryTable(store, reports){
   const body = document.getElementById('history-body');
   if(!body) return;
   if(reports.length === 0){
-    body.innerHTML = `<tr><td colspan="19" class="empty-row">아직 저장된 일일보고가 없어요. 위에서 입력하고 저장해보세요.</td></tr>`;
+    body.innerHTML = `<tr><td colspan="19" class="empty-row">선택한 기간에 제출된 자료가 없어요. 기간을 넓혀보세요.</td></tr>`;
     return;
   }
   const rows = [...reports].sort((a,b) => a.date < b.date ? 1 : -1);
@@ -1133,48 +1141,32 @@ function renderHistoryTable(store, reports){
       <td>${fmtNum(r.actRental)}</td>
       <td>${r.priceSheet === '완료' ? '<span class="badge ok">완료</span>' : '<span class="badge no">미완료</span>'}</td>
       <td>${r.promoDone}/${r.promoTarget}</td>
-      <td class="row-actions">
-        <button class="icon-btn" data-act="edit" title="편집">✏️</button>
-        <button class="icon-btn" data-act="del" title="삭제">🗑️</button>
-      </td>
     </tr>`;
   }).join('');
-
-  body.querySelectorAll('.icon-btn').forEach(btn => {
-    btn.onclick = async () => {
-      const tr = btn.closest('tr');
-      const date = tr.getAttribute('data-date');
-      if(btn.dataset.act === 'edit'){
-        const rep = await loadReport(store, date);
-        if(rep){ fillFormFromData(rep); window.scrollTo({top:0, behavior:'smooth'}); toast(`${date} 데이터를 편집 폼으로 불러왔어요`); }
-      } else if(btn.dataset.act === 'del'){
-        if(confirm(`${date} 데이터를 삭제할까요?`)){
-          await deleteReportData(store, date);
-          await renderHistoryAndCharts(store);
-          toast('삭제했어요');
-        }
-      }
-    };
-  });
 }
 
 function destroyChart(id){
   if(CHARTS[id]){ CHARTS[id].destroy(); delete CHARTS[id]; }
 }
-function renderStoreCharts(store, reports){
-  const dates = recentDates(14);
-  const map = byDateMap(reports);
-  const labels = dates.map(mdLabel);
-  const pick = (d, f) => { const r = map[d]; return r ? clamp0(r[f]) : 0; };
+function renderStoreCharts(store, reports, dates, unit){
+  const buckets = buildBuckets(dates, unit);
+  const labels = buckets.map(k => bucketLabelOf(k, unit));
+  const grouped = {};
+  reports.forEach(r => {
+    const k = bucketKeyOf(r.date, unit);
+    if(!grouped[k]) grouped[k] = [];
+    grouped[k].push(r);
+  });
+  const sum = (k, f) => (grouped[k] || []).reduce((s, r) => s + clamp0(r[f]), 0);
 
   destroyChart('chart-sales');
   const salesEl = document.getElementById('chart-sales');
   if(salesEl){
-    const vals = dates.map(d => pick(d, 'sales'));
+    const vals = buckets.map(k => sum(k, 'sales'));
     CHARTS['chart-sales'] = new Chart(salesEl, {
       type: 'line',
       data: { labels, datasets: [{
-        label: '일매출', data: vals,
+        label: '매출', data: vals,
         borderColor: CH.purple, backgroundColor: CH.purpleLight, fill: true, tension: 0.3, pointRadius: 3
       }]},
       options: baseChartOptions((v)=>fmtWon(v), zeroFallback(vals, 100000))
@@ -1185,18 +1177,17 @@ function renderStoreCharts(store, reports){
   const inqEl = document.getElementById('chart-inquiry');
   if(inqEl){
     const series = [
-      ['전화', 'inqPhone', CH.blue], ['문자', 'inqText', CH.teal], ['카톡플친', 'inqWalkin', CH.purple],
-      ['네이버', 'inqNaver', CH.green], ['당근', 'inqKarrot', CH.orange], ['기타', 'inqEtc', CH.gray]
+      ['전화','inqPhone',CH.blue], ['문자','inqText',CH.teal], ['카톡플친','inqWalkin',CH.purple],
+      ['네이버','inqNaver',CH.green], ['당근','inqKarrot',CH.orange], ['기타','inqEtc',CH.gray]
     ];
     const all = [];
     const datasets = series.map(([label, field, color]) => {
-      const vals = dates.map(d => pick(d, field));
+      const vals = buckets.map(k => sum(k, field));
       all.push(...vals);
       return seriesDS(label, vals, color);
     });
     CHARTS['chart-inquiry'] = new Chart(inqEl, {
-      type: 'bar',
-      data: { labels, datasets },
+      type: 'bar', data: { labels, datasets },
       options: stackedChartOptions(zeroFallback(all, 5))
     });
   }
@@ -1205,18 +1196,17 @@ function renderStoreCharts(store, reports){
   const actEl = document.getElementById('chart-activation');
   if(actEl){
     const series = [
-      ['무선', 'actWireless', CH.purple], ['유선', 'actWired', CH.blue],
-      ['유심', 'actUsim', CH.teal], ['렌탈', 'actRental', CH.orange]
+      ['무선','actWireless',CH.purple], ['유선','actWired',CH.blue],
+      ['유심','actUsim',CH.teal], ['렌탈','actRental',CH.orange]
     ];
     const all = [];
     const datasets = series.map(([label, field, color]) => {
-      const vals = dates.map(d => pick(d, field));
+      const vals = buckets.map(k => sum(k, field));
       all.push(...vals);
       return seriesDS(label, vals, color);
     });
     CHARTS['chart-activation'] = new Chart(actEl, {
-      type: 'bar',
-      data: { labels, datasets },
+      type: 'bar', data: { labels, datasets },
       options: stackedChartOptions(zeroFallback(all, 5))
     });
   }
@@ -1229,7 +1219,7 @@ function renderStoreCharts(store, reports){
       ['옆커폰어플','stSideApp'], ['고객소개','stReferral'], ['카톡플친','stWalkin'],
       ['시세표방문','stPriceVisit'], ['광고방문','stAdVisit']
     ];
-    const vals = fields.map(([, f]) => dates.reduce((sum, d) => sum + pick(d, f), 0));
+    const vals = fields.map(([, f]) => reports.reduce((s, r) => s + clamp0(r[f]), 0));
     CHARTS['chart-saletype'] = new Chart(stEl, {
       type: 'bar',
       data: { labels: fields.map(([k]) => k), datasets: [{
@@ -1354,9 +1344,10 @@ const LOST_ADVICE = {
   '기타': '사유가 다양해요. 기록을 조금 더 구체적으로 남기면 패턴 분석이 정확해집니다.'
 };
 
+const pct = (n, d) => d > 0 ? Math.round((n/d)*1000)/10 : 0;
+
 function buildInsights(a){
   const out = [];
-  const pct = (n, d) => d > 0 ? Math.round((n/d)*1000)/10 : 0;
 
   if(a.inqTotal === 0 && a.visitors === 0){
     out.push({ level:'info', title:'아직 분석할 자료가 없어요', detail:'점장님들이 며칠 입력하면 이 자리에 자동으로 진단이 나옵니다.' });
