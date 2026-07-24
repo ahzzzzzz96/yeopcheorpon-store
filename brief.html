@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>오늘 브리핑 · 옆커폰 대구지사</title>
+<style>
+  :root{
+    --bg:#f4f5f7; --card:#ffffff; --ink:#1c2430; --muted:#5b6875;
+    --line:#e4e7ec; --red:#c0392b; --redbg:#fdecea; --amber:#b7791f;
+    --amberbg:#fdf3e2; --green:#2e7d52; --greenbg:#e8f5ee; --blue:#2f6db3;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic","맑은 고딕",sans-serif;
+    line-height:1.55;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:680px;margin:0 auto;padding:20px 16px 40px;}
+  .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+  .back{font-size:13px;color:var(--blue);text-decoration:none;}
+  .refresh{font-size:13px;border:1px solid var(--line);background:#fff;border-radius:20px;padding:6px 14px;cursor:pointer;color:var(--ink);}
+  .refresh:active{background:#eef1f4;}
+  .head{margin-bottom:14px;}
+  .kicker{font-size:13px;color:var(--muted);}
+  .title{font-size:24px;font-weight:800;margin:2px 0 4px;}
+  .date{font-size:14px;color:var(--muted);}
+  .summary{background:var(--ink);color:#fff;border-radius:14px;padding:16px 18px;margin:12px 0 18px;}
+  .summary b{font-size:17px;}
+  .summary p{margin:6px 0 0;font-size:14px;color:#d3dae2;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:14px;}
+  .card h2{font-size:15px;margin:0 0 12px;display:flex;align-items:center;gap:8px;}
+  .dot{width:9px;height:9px;border-radius:50%;display:inline-block;}
+  .item{display:flex;gap:10px;padding:9px 0;border-top:1px solid var(--line);align-items:flex-start;}
+  .item:first-of-type{border-top:none;}
+  .tag{flex:none;font-size:11px;font-weight:700;padding:3px 8px;border-radius:20px;white-space:nowrap;margin-top:1px;}
+  .tag.red{background:var(--redbg);color:var(--red);}
+  .tag.amber{background:var(--amberbg);color:var(--amber);}
+  .tag.green{background:var(--greenbg);color:var(--green);}
+  .tag.blue{background:#e8f0f9;color:var(--blue);}
+  .itxt{font-size:14px;}
+  .itxt .sub{color:var(--muted);font-size:12.5px;margin-top:1px;}
+  table{width:100%;border-collapse:collapse;font-size:13px;margin-top:4px;}
+  th,td{text-align:center;padding:8px 4px;border-bottom:1px solid var(--line);}
+  th{color:var(--muted);font-weight:600;font-size:12px;}
+  td.store{text-align:left;font-weight:700;}
+  .ok{color:var(--green);font-weight:700;}
+  .no{color:var(--red);font-weight:700;}
+  .warn{color:var(--amber);font-weight:700;}
+  .mut{color:var(--muted);}
+  .meter{height:8px;background:var(--line);border-radius:6px;overflow:hidden;margin:8px 0 2px;}
+  .meter > span{display:block;height:100%;background:var(--blue);transition:width .4s;}
+  .foot{font-size:12px;color:var(--muted);text-align:center;margin-top:18px;line-height:1.7;}
+  .state{text-align:center;color:var(--muted);padding:40px 0;font-size:14px;}
+  .allgood{background:var(--greenbg);color:var(--green);border-radius:14px;padding:18px;text-align:center;font-weight:700;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <a class="back" href="https://ahzzzzzz96.github.io/yeopcheorpon-hub/">← 홈으로</a>
+    <button class="refresh" onclick="loadBrief()">↻ 새로고침</button>
+  </div>
+  <div class="head">
+    <div class="kicker">옆커폰 · 대구지사 아침 브리핑</div>
+    <div class="title">오늘 놓치면 안 되는 것</div>
+    <div class="date" id="date">불러오는 중…</div>
+  </div>
+  <div id="content"><div class="state">데이터를 불러오는 중이에요…</div></div>
+  <div class="foot">
+    매출 = 매장 보고 시스템(실시간) · 인수인계 = 클라우드<br>
+    매일 오전 10시 자동 브리핑도 발송돼요
+  </div>
+</div>
+
+<script>
+// 매출: 같은 사이트(/api/kv) 이므로 CORS 없이 바로 읽힘
+// 인수인계: Supabase REST (외부 접근 허용됨)
+const HB_URL = "https://skhbcizzqgmlnwiwlaxt.supabase.co/rest/v1/kv";
+const HB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNraGJjaXp6cWdtbG53aXdsYXh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4NjI5NTIsImV4cCI6MjEwMDQzODk1Mn0.Ov_4bLIkkxgRb-UG_qSYl_XNM0BbNESOXJl1dFVLfAo";
+
+function kstToday(){ return new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()); }
+function kstWeekdayKey(){
+  const wd=new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Seoul',weekday:'short'}).format(new Date());
+  return ({Mon:'mon',Wed:'wed',Fri:'fri',Sat:'sat'})[wd]||null; // 광고 체크 대상 요일만
+}
+function dateLabel(){
+  const wd=new Intl.DateTimeFormat('ko-KR',{timeZone:'Asia/Seoul',weekday:'short'}).format(new Date());
+  const t=kstToday().split('-'); return `${t[0]}년 ${Number(t[1])}월 ${Number(t[2])}일 (${wd})`;
+}
+function esc(s){return String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+const looksTest = s => !s || /^(1+|ㅇ+|3+|test|테스트|ㄴ+|ㅁ+)$/i.test(String(s).trim());
+
+async function kv(key){
+  try{
+    const r = await fetch('/api/kv?key='+encodeURIComponent(key));
+    if(!r.ok) return null;
+    const j = await r.json();
+    if(!j || j.value==null || j.value==='') return null;
+    return JSON.parse(j.value);
+  }catch(e){ return undefined; } // undefined = 조회 실패
+}
+
+async function loadBrief(){
+  document.getElementById('date').textContent = dateLabel();
+  document.getElementById('content').innerHTML = '<div class="state">데이터를 불러오는 중이에요…</div>';
+  const today = kstToday(), wdKey = kstWeekdayKey();
+
+  const stores = (await kv('stores')) || [];
+  const rows=[], unreported=[], failed=[], zeroSales=[], noPrice=[], promoShort=[], adMiss=[], notAct=[], follow=[];
+
+  for(const s of stores){
+    const rep = await kv(`report:${s}:${today}`);
+    if(rep===undefined){ failed.push(s); rows.push({s,fail:true}); continue; }
+    if(rep===null){ unreported.push(s); rows.push({s,reported:false}); continue; }
+    const sales=rep.sales||0, price=rep.priceSheet||'', pd=rep.promoDone||0, pt=rep.promoTarget||0;
+    const ads=rep.ads||{}, na=rep.notActivated||0, note=(rep.lostNote||'').trim();
+    if(sales===0) zeroSales.push(s);
+    if(price==='미완료') noPrice.push(s);
+    if(pt>0 && pd<pt) promoShort.push(`${s} ${pd}/${pt}`);
+    if(wdKey && ads[wdKey]===false) adMiss.push(s);
+    if(na>0) notAct.push(`${s} ${na}건`);
+    if(note) follow.push({s,note});
+    rows.push({s,reported:true,sales,price,promo:`${pd}/${pt}`,ad:(wdKey?(ads[wdKey]?'✓':'✕'):'–')});
+  }
+
+  // 인수인계 (Supabase)
+  let hoItems=[];
+  try{
+    const r = await fetch(HB_URL+'?select=key,value&namespace=eq.handover&key=like.handover:%25',{headers:{apikey:HB_KEY,Authorization:'Bearer '+HB_KEY}});
+    if(r.ok){
+      const arr = await r.json();
+      arr.filter(x=>!x.key.includes('handover_index')).forEach(x=>{
+        let o; try{o=JSON.parse(x.value);}catch(e){return;}
+        if(!o||!o.meta) return;
+        let all=[],pending=0,total=0,done=0;
+        Object.values(o.simple||{}).forEach(a=>{if(Array.isArray(a))all=all.concat(a);});
+        all.forEach(it=>{total++; if(it.out&&it.in)done++; else if(it.out&&!it.in)pending++;});
+        hoItems.push({store:o.meta.store||'(무제)',total,done,pending,notStarted:done===0&&pending===0,
+          testish:looksTest(o.meta.store)||looksTest(o.meta.outgoing)||looksTest(o.meta.incoming)});
+      });
+    }
+  }catch(e){}
+
+  render({rows,stores,unreported,failed,zeroSales,noPrice,promoShort,adMiss,notAct,follow,hoItems,wdKey});
+}
+
+function render(d){
+  const reported = d.stores.length - d.unreported.length - d.failed.length;
+  const pct = d.stores.length? Math.round(reported/d.stores.length*100):0;
+  const flags = d.unreported.length + d.follow.length + d.notAct.length + d.noPrice.length + d.promoShort.length + (d.adMiss.length?1:0);
+  let html='';
+
+  if(flags===0 && !d.failed.length){
+    html += `<div class="allgood">🎉 오늘은 놓친 항목이 없어요! 전 매장 정상.</div>`;
+  }else{
+    html += `<div class="summary"><b>오늘 꼭 챙길 것 ${flags}가지</b><p>`+
+      (d.unreported.length?`매출 미보고 ${d.unreported.length}곳, `:'')+
+      (d.follow.length?`고객 후속 연락 ${d.follow.length}건, `:'')+
+      `시세표·프로모션·광고 체크를 확인하세요. 아래 🔴부터 처리하시면 돼요.</p></div>`;
+  }
+
+  // 매출 보고 현황
+  html += `<div class="card"><h2><span class="dot" style="background:var(--blue)"></span>오늘 매출 보고 현황 &nbsp;<span class="mut" style="font-weight:400">${reported} / ${d.stores.length} 매장</span></h2>
+    <div class="meter"><span style="width:${pct}%"></span></div>
+    <div class="mut" style="font-size:12px">${d.unreported.length? '미보고: '+d.unreported.map(esc).join(', ') : (d.failed.length?'일부 매장 조회 실패':'전 매장 보고 완료')}</div></div>`;
+
+  // 🔴 지금 바로
+  let red='';
+  if(d.unreported.length) red += `<div class="item"><span class="tag red">미보고</span><div class="itxt"><b>${d.unreported.map(esc).join(' · ')}</b> 오늘 매출 보고 미제출<div class="sub">보고 독려 또는 마감 전 확인</div></div></div>`;
+  d.follow.forEach(f=>{ red += `<div class="item"><span class="tag red">후속 연락</span><div class="itxt"><b>${esc(f.s)}</b> — ${esc(f.note).replace(/\n/g,' / ')}</div></div>`; });
+  if(d.notAct.length) red += `<div class="item"><span class="tag red">미개통</span><div class="itxt">미개통 후속: <b>${d.notAct.map(esc).join(' · ')}</b><div class="sub">처리 현황 확인</div></div></div>`;
+  if(red) html += `<div class="card"><h2><span class="dot" style="background:var(--red)"></span>🔴 지금 바로 챙기기</h2>${red}</div>`;
+
+  // 🟡 오늘 중
+  let amb='';
+  if(d.noPrice.length) amb += `<div class="item"><span class="tag amber">시세표</span><div class="itxt"><b>${d.noPrice.map(esc).join(' · ')}</b> 시세표 미완료<div class="sub">업로드/작성 마무리</div></div></div>`;
+  if(d.promoShort.length) amb += `<div class="item"><span class="tag amber">프로모션</span><div class="itxt"><b>${d.promoShort.map(esc).join(' · ')}</b> 목표 대비 진행 부족</div></div>`;
+  if(d.adMiss.length) amb += `<div class="item"><span class="tag amber">광고 체크</span><div class="itxt">오늘 광고 체크 미완료: <b>${d.adMiss.map(esc).join(' · ')}</b></div></div>`;
+  if(amb) html += `<div class="card"><h2><span class="dot" style="background:var(--amber)"></span>🟡 오늘 중 확인·완료</h2>${amb}</div>`;
+
+  // 매장별 표
+  let tr='';
+  d.rows.forEach(r=>{
+    if(r.fail){ tr+=`<tr><td class="store">${esc(r.s)}</td><td class="warn" colspan="5">조회 실패</td></tr>`; return; }
+    if(!r.reported){ tr+=`<tr><td class="store">${esc(r.s)}</td><td class="no">미보고</td><td class="mut">–</td><td class="mut">–</td><td class="mut">–</td><td class="mut">–</td></tr>`; return; }
+    const salesCell = r.sales===0?'<td class="warn">0원</td>':`<td>${(r.sales/10000).toLocaleString()}만원</td>`;
+    tr += `<tr><td class="store">${esc(r.s)}</td><td class="ok">✓</td>${salesCell}`+
+      (r.price==='미완료'?'<td class="no">미완료</td>':'<td class="ok">완료</td>')+
+      `<td class="${/^0\//.test(r.promo)?'no':'ok'}">${esc(r.promo)}</td>`+
+      (r.ad==='✕'?'<td class="no">✕</td>':(r.ad==='✓'?'<td class="ok">✓</td>':'<td class="mut">–</td>'))+`</tr>`;
+  });
+  html += `<div class="card"><h2><span class="dot" style="background:var(--blue)"></span>매장별 한눈에</h2>
+    <table><thead><tr><th style="text-align:left">매장</th><th>보고</th><th>매출</th><th>시세표</th><th>프로모션</th><th>광고</th></tr></thead><tbody>${tr}</tbody></table></div>`;
+
+  // 인수인계
+  if(d.hoItems.length){
+    let ho='';
+    d.hoItems.forEach(h=>{
+      if(h.testish) ho += `<div class="item"><span class="tag green">정리 권장</span><div class="itxt"><b>'${esc(h.store)}'</b> 테스트로 보이는 항목<div class="sub">실제 건이 아니면 삭제 권장</div></div></div>`;
+      else if(h.notStarted) ho += `<div class="item"><span class="tag blue">진행중</span><div class="itxt"><b>${esc(h.store)}</b> 착수 단계 · 항목 미완료</div></div>`;
+      else if(h.pending>0) ho += `<div class="item"><span class="tag amber">인수 대기</span><div class="itxt"><b>${esc(h.store)}</b> 완료 ${h.done}/${h.total} · 인수 확인 대기 ${h.pending}건</div></div>`;
+      else ho += `<div class="item"><span class="tag green">진행</span><div class="itxt"><b>${esc(h.store)}</b> 완료 ${h.done}/${h.total}</div></div>`;
+    });
+    html += `<div class="card"><h2><span class="dot" style="background:var(--green)"></span>인수인계 진행 상황</h2>${ho}</div>`;
+  }
+
+  document.getElementById('content').innerHTML = html;
+}
+
+loadBrief();
+</script>
+</body>
+</html>
