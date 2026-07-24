@@ -7,6 +7,12 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script>
+// 첫 번째 CDN이 막혀 있으면 두 번째 CDN에서 다시 시도합니다
+if(typeof Chart === 'undefined'){
+  document.write('<scr' + 'ipt src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"><\/scr' + 'ipt>');
+}
+</script>
 <style>
   :root{
     --bg:#F7F5FB; --surface:#FFFFFF; --surface2:#F1ECFA;
@@ -224,6 +230,11 @@
 }
 .admin-scope .unit-btn:last-child{border-right:none;}
 .admin-scope .unit-btn.active{background:var(--purple);color:#fff;}
+.admin-scope .chart-fail{
+  position:absolute;left:14px;right:14px;top:50%;transform:translateY(-50%);
+  background:#FDECEC;border:1px solid #F5C2C2;color:#8A1F1F;border-radius:10px;
+  padding:12px 14px;font-size:12.5px;font-weight:700;line-height:1.5;text-align:center;
+}
 .admin-scope .big-table{font-size:15px;}
 .admin-scope .big-table thead th{font-size:13.5px;padding:13px 12px;}
 .admin-scope .big-table tbody td{padding:15px 12px;font-size:16px;font-weight:600;}
@@ -1148,7 +1159,21 @@ function renderHistoryTable(store, reports){
 function destroyChart(id){
   if(CHARTS[id]){ CHARTS[id].destroy(); delete CHARTS[id]; }
 }
+// Chart.js가 로딩되지 않았을 때 조용히 실패하지 않고 화면에 알려줍니다
+function chartLibReady(){
+  if(typeof Chart !== 'undefined') return true;
+  document.querySelectorAll('.chart-box').forEach(box => {
+    if(!box.querySelector('.chart-fail')){
+      const p = document.createElement('div');
+      p.className = 'chart-fail';
+      p.textContent = '⚠ 그래프 라이브러리를 불러오지 못했어요. 인터넷 연결 또는 회사 보안정책(CDN 차단)을 확인해주세요.';
+      box.appendChild(p);
+    }
+  });
+  return false;
+}
 function renderStoreCharts(store, reports, dates, unit){
+  if(!chartLibReady()) return;
   const buckets = buildBuckets(dates, unit);
   const labels = buckets.map(k => bucketLabelOf(k, unit));
   const grouped = {};
@@ -1667,6 +1692,7 @@ async function renderOverviewBody(){
 }
 async function renderOverviewCharts(start, end){
   if(STORES.length === 0) return;
+  if(!chartLibReady()) return;
   const dates = dateRangeArray(start, end);
   const storeReportsMap = {};
   let anyData = false;
