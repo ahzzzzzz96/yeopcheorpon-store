@@ -384,6 +384,14 @@ if(typeof Chart === 'undefined'){
 .admin-scope .toast.error{background:var(--red);}
 .admin-scope ::selection{background:var(--purple-light);}
 
+
+.ov-edit{ width:74px; max-width:84px; padding:6px 7px; border:1px solid var(--line); border-radius:8px; font-size:13px; font-family:'Space Grotesk','Noto Sans KR',sans-serif; text-align:right; background:#FCFBFE; color:var(--text); }
+.ov-edit:hover{ border-color:var(--purple); }
+.ov-edit:focus{ outline:2px solid var(--purple); outline-offset:1px; border-color:var(--purple); background:#fff; }
+.ov-edit.ov-sales{ width:106px; max-width:118px; }
+.won-suffix{ font-size:11px; color:var(--muted); margin-left:3px; }
+#overview-body td .ov-rate, #overview-body td.ov-rate{ font-weight:700; }
+#overview-body td{ vertical-align:middle; }
 </style>
 </head>
 <body>
@@ -854,8 +862,10 @@ function parseKakaoText(text){
 
 /* ===================== 계산 ===================== */
 function computeTotals(d){
-  const inqTotal = clamp0(d.inqWalkin)+clamp0(d.inqPhone)+clamp0(d.inqText)+clamp0(d.inqNaver)+clamp0(d.inqKarrot)+clamp0(d.inqEtc);
-  const actTotal = clamp0(d.actWireless)+clamp0(d.actWired)+clamp0(d.actUsim)+clamp0(d.actRental);
+  let inqTotal = clamp0(d.inqWalkin)+clamp0(d.inqPhone)+clamp0(d.inqText)+clamp0(d.inqNaver)+clamp0(d.inqKarrot)+clamp0(d.inqEtc);
+  let actTotal = clamp0(d.actWireless)+clamp0(d.actWired)+clamp0(d.actUsim)+clamp0(d.actRental);
+  if(d.inqTotalOv !== undefined && d.inqTotalOv !== null && d.inqTotalOv !== '') inqTotal = clamp0(d.inqTotalOv);
+  if(d.actTotalOv !== undefined && d.actTotalOv !== null && d.actTotalOv !== '') actTotal = clamp0(d.actTotalOv);
   const activationRate = inqTotal > 0 ? Math.round((actTotal/inqTotal)*1000)/10 : 0;
   return { inqTotal, actTotal, activationRate };
 }
@@ -1589,7 +1599,7 @@ async function renderOverview(){
   main.innerHTML = `
   <section class="card ov-section">
     <div class="card-head">
-      <h2>📋 일자별 순위 <span class="hint" style="font-weight:500">— 일보고용</span></h2>
+      <h2>📋 일자별 순위 <span class="hint" style="font-weight:500">— 숫자 칸을 눌러 바로 수정할 수 있어요 (자동 저장)</span></h2>
       <label class="f-label" style="max-width:200px;margin:0">기준 날짜
         <input type="date" id="ov-date" value="${today}">
       </label>
@@ -1663,7 +1673,12 @@ async function renderOverviewBody(){
       return `<tr class="no-report">
         <td><span class="rank-chip">${i+1}</span></td>
         <td class="store-name">${esc(store)}</td>
-        <td>—</td><td>0</td><td>0</td><td>0</td><td>0%</td><td>0원</td>
+        <td>—</td>
+        <td><input class="ov-edit" type="number" min="0" data-store="${esc(store)}" data-field="inq" value="0"></td>
+        <td><input class="ov-edit" type="number" min="0" data-store="${esc(store)}" data-field="vis" value="0"></td>
+        <td><input class="ov-edit" type="number" min="0" data-store="${esc(store)}" data-field="act" value="0"></td>
+        <td class="ov-rate">0%</td>
+        <td><input class="ov-edit ov-sales" type="number" min="0" data-store="${esc(store)}" data-field="sales" value="0"><span class="won-suffix">원</span></td>
       </tr>`;
     }
     const t = computeTotals(rep);
@@ -1673,11 +1688,11 @@ async function renderOverviewBody(){
       <td><span class="rank-chip">${i+1}</span></td>
       <td class="store-name">${esc(store)}</td>
       <td>✅</td>
-      <td>${fmtNum(t.inqTotal)}</td>
-      <td>${fmtNum(rep.visitors)}</td>
-      <td>${fmtNum(t.actTotal)}</td>
-      <td>${t.activationRate}%</td>
-      <td>${fmtWon(rep.sales)}</td>
+      <td><input class="ov-edit" type="number" min="0" data-store="${esc(store)}" data-field="inq" value="${t.inqTotal}"></td>
+      <td><input class="ov-edit" type="number" min="0" data-store="${esc(store)}" data-field="vis" value="${clamp0(rep.visitors)}"></td>
+      <td><input class="ov-edit" type="number" min="0" data-store="${esc(store)}" data-field="act" value="${t.actTotal}"></td>
+      <td class="ov-rate">${t.activationRate}%</td>
+      <td><input class="ov-edit ov-sales" type="number" min="0" data-store="${esc(store)}" data-field="sales" value="${clamp0(rep.sales)}"><span class="won-suffix">원</span></td>
     </tr>`;
   }).join('');
 
@@ -1689,6 +1704,63 @@ async function renderOverviewBody(){
   </tr>`;
 
   body.innerHTML = html + totalRow;
+  wireOverviewEdits();
+}
+/* ===== 전체 개요 인라인 편집 (관리자) ===== */
+function ovFieldLabel(f){ return f==='inq'?'총문의':f==='act'?'개통':f==='vis'?'내방':'일매출'; }
+function wireOverviewEdits(){
+  document.querySelectorAll('#overview-body .ov-edit').forEach(inp => {
+    inp.addEventListener('change', onOverviewEdit);
+    inp.addEventListener('keydown', e => { if(e.key==='Enter'){ e.preventDefault(); inp.blur(); } });
+    inp.addEventListener('focus', () => { try{ inp.select(); }catch(_e){} });
+  });
+}
+async function onOverviewEdit(e){
+  const inp = e.target;
+  const store = inp.dataset.store, field = inp.dataset.field;
+  const val = Math.max(0, Math.round(Number(inp.value)||0));
+  inp.value = val;
+  const dEl = document.getElementById('ov-date');
+  const date = dEl ? dEl.value : '';
+  if(!date){ toast('기준 날짜를 선택해주세요', true); return; }
+  let rep = await loadReport(store, date);
+  if(!rep) rep = emptyReport(store, date);
+  rep.reported = true;
+  if(field==='inq') rep.inqTotalOv = val;
+  else if(field==='act') rep.actTotalOv = val;
+  else if(field==='vis') rep.visitors = val;
+  else if(field==='sales') rep.sales = val;
+  const ok = await saveReportData(store, date, rep);
+  if(ok){
+    const tr = inp.closest('tr');
+    if(tr){ tr.classList.remove('no-report'); if(tr.children[2]) tr.children[2].textContent = '✅'; }
+    refreshOverviewComputed();
+    toast(store + ' · ' + ovFieldLabel(field) + ' 저장됨');
+  }
+}
+function refreshOverviewComputed(){
+  const trs = document.querySelectorAll('#overview-body tr');
+  let tinq=0,tvis=0,tact=0,tsales=0,rep=0;
+  trs.forEach(tr => {
+    if(tr.classList.contains('total-row')) return;
+    const inqI = tr.querySelector('[data-field="inq"]');
+    if(!inqI) return;
+    const inq = Number(inqI.value)||0;
+    const vis = Number(tr.querySelector('[data-field="vis"]').value)||0;
+    const act = Number(tr.querySelector('[data-field="act"]').value)||0;
+    const sales = Number(tr.querySelector('[data-field="sales"]').value)||0;
+    const rate = inq>0 ? Math.round((act/inq)*1000)/10 : 0;
+    const rc = tr.querySelector('.ov-rate'); if(rc) rc.textContent = rate + '%';
+    tinq+=inq; tvis+=vis; tact+=act; tsales+=sales;
+    if(!tr.classList.contains('no-report')) rep++;
+  });
+  const totalTr = document.querySelector('#overview-body tr.total-row');
+  if(totalTr){
+    const totRate = tinq>0 ? Math.round((tact/tinq)*1000)/10 : 0;
+    totalTr.innerHTML = '<td></td><td>합계</td><td>'+rep+'/'+STORES.length+'</td>'
+      + '<td>'+fmtNum(tinq)+'</td><td>'+fmtNum(tvis)+'</td><td>'+fmtNum(tact)+'</td>'
+      + '<td>'+totRate+'%</td><td>'+fmtWon(tsales)+'</td>';
+  }
 }
 async function renderOverviewCharts(start, end){
   if(STORES.length === 0) return;
