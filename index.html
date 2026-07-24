@@ -29,6 +29,29 @@
   }
   select.store-select:focus{ outline:none; border-color:var(--purple); }
   .date-label{ color:var(--muted); font-size:13px; margin-top:8px; }
+  .date-row{ display:flex; gap:8px; align-items:center; margin-top:10px; }
+  .input-date{
+    flex:1; background:var(--surface); border:1.5px solid var(--line); color:var(--text);
+    font-size:15px; font-weight:700; padding:9px 12px; border-radius:12px;
+    font-family:'Noto Sans KR', sans-serif;
+  }
+  .input-date:focus{ outline:none; border-color:var(--purple); }
+  .today-btn{
+    padding:9px 16px; border-radius:12px; border:1.5px solid var(--line);
+    background:var(--surface); color:var(--purple-dark); font-size:13.5px; font-weight:700;
+    font-family:'Noto Sans KR', sans-serif; cursor:pointer; white-space:nowrap;
+  }
+  .today-btn:active{ background:var(--purple); color:#fff; border-color:var(--purple); }
+  .past-notice{
+    margin-top:8px; padding:9px 14px; border-radius:12px;
+    background:#FDF3E4; border:1px solid #F7E3C2; color:#8A5A0A;
+    font-size:12.5px; font-weight:700;
+  }
+  .api-banner{
+    margin:12px 16px 0; padding:12px 16px; border-radius:12px;
+    background:#FDECEC; border:1px solid #F5C2C2; color:#8A1F1F;
+    font-size:12.5px; font-weight:700; line-height:1.5;
+  }
 
   .signal-wrap{ display:flex; align-items:flex-end; gap:4px; height:22px; }
   .bar{ width:6px; background:var(--surface2); border-radius:2px; transition: background .3s; }
@@ -187,7 +210,49 @@
 .admin-scope .input-card{grid-area:input;}
 .admin-scope .charts-card{grid-area:charts;}
 .admin-scope .table-card{grid-area:table;}
-}.admin-scope .card{
+}
+.admin-scope .ov-section{grid-column:1 / -1;}
+.admin-scope .big-table{font-size:15px;}
+.admin-scope .big-table thead th{font-size:13.5px;padding:13px 12px;}
+.admin-scope .big-table tbody td{padding:15px 12px;font-size:16px;font-weight:600;}
+.admin-scope .big-table .store-name{font-size:17px;font-weight:800;}
+.admin-scope .big-table .rank-chip{width:26px;height:26px;font-size:13.5px;}
+.admin-scope .big-table tr.total-row td{background:var(--purple-light);font-weight:800;color:var(--purple-dark);}
+.admin-scope .big-table tr.no-report td{color:var(--gray);}
+.admin-scope .kpi-row{display:grid;gap:12px;grid-template-columns:repeat(2,1fr);margin-bottom:16px;}
+@media(min-width:760px){.admin-scope .kpi-row{grid-template-columns:repeat(5,1fr);}}
+.admin-scope .kpi-card{background:#FCFBFE;border:1px solid var(--line);border-radius:12px;padding:14px;text-align:center;}
+.admin-scope .kpi-num{display:block;font-size:21px;font-weight:800;color:var(--ink);}
+.admin-scope .kpi-label{display:block;font-size:11.5px;color:var(--sub);font-weight:700;margin-top:3px;}
+.admin-scope .no-data-note{
+  background:#FDF3E4;border:1px solid #F7E3C2;color:#8A5A0A;border-radius:10px;
+  padding:10px 14px;font-size:12.5px;font-weight:600;margin-bottom:14px;
+}
+.admin-scope .insight-grid{display:grid;gap:10px;grid-template-columns:1fr;}
+@media(min-width:760px){.admin-scope .insight-grid{grid-template-columns:1fr 1fr;}}
+.admin-scope .insight{border-radius:12px;padding:13px 15px;border:1px solid var(--line);background:#FCFBFE;border-left-width:4px;}
+.admin-scope .insight-title{font-size:14px;font-weight:800;margin-bottom:4px;}
+.admin-scope .insight-detail{font-size:12.5px;color:var(--sub);line-height:1.6;}
+.admin-scope .insight-good{border-left-color:var(--green);background:#F3FBF6;}
+.admin-scope .insight-good .insight-title{color:var(--green);}
+.admin-scope .insight-warn{border-left-color:var(--orange);background:#FEF9F1;}
+.admin-scope .insight-warn .insight-title{color:#B4650A;}
+.admin-scope .insight-bad{border-left-color:var(--red);background:#FEF4F4;}
+.admin-scope .insight-bad .insight-title{color:var(--red);}
+.admin-scope .insight-info{border-left-color:var(--purple);background:var(--purple-light);}
+.admin-scope .insight-info .insight-title{color:var(--purple-dark);}
+.admin-scope .lost-bars{display:flex;flex-direction:column;gap:8px;}
+.admin-scope .lost-bar-row{display:flex;align-items:center;gap:10px;font-size:13px;}
+.admin-scope .lost-bar-label{width:92px;flex-shrink:0;font-weight:700;color:var(--sub);}
+.admin-scope .lost-bar-track{flex:1;height:20px;background:var(--purple-light);border-radius:6px;overflow:hidden;}
+.admin-scope .lost-bar-fill{display:block;height:100%;background:var(--red);border-radius:6px;}
+.admin-scope .lost-bar-val{width:44px;text-align:right;font-weight:800;color:var(--red);}
+.admin-scope .lost-detail-list{margin-top:14px;}
+.admin-scope .lost-detail-list summary{cursor:pointer;font-size:12.5px;font-weight:700;color:var(--purple);}
+.admin-scope .lost-detail-list ul{margin:10px 0 0;padding-left:18px;}
+.admin-scope .lost-detail-list li{font-size:12.5px;line-height:1.8;color:var(--ink);}
+.admin-scope .analysis-head h2{margin-bottom:14px;}
+.admin-scope .card{
     background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
     padding:20px 22px;box-shadow:0 1px 2px rgba(30,27,41,0.04);
   }
@@ -287,6 +352,8 @@
 </head>
 <body>
 
+<div id="apiBanner" class="api-banner" style="display:none"></div>
+
 <div class="mode-bar">
   <button class="mode-btn active" id="modeBtnInput">📱 매장 입력</button>
   <button class="mode-btn" id="modeBtnAdmin">🔒 관리자 분석</button>
@@ -313,7 +380,12 @@
       <div class="progress-text" id="progressText">0/4 완료</div>
     </div>
   </div>
+  <div class="date-row">
+    <input type="date" class="input-date" id="inputDate">
+    <button class="today-btn" id="todayBtn">오늘</button>
+  </div>
   <div class="date-label" id="dateLabel"></div>
+  <div class="past-notice" id="pastNotice" style="display:none">📝 지난 날짜를 수정하는 중이에요</div>
 </header>
 
 <main id="mainContent" style="display:none">
@@ -493,34 +565,88 @@
 // 이 파일은 같은 사이트의 /api/kv 서버 API를 호출해서 모든 컴퓨터/휴대폰에서
 // 동일한 데이터(Cloudflare KV)를 공유합니다. functions/api/kv.js 가 그 API를 구현합니다.
 const API_BASE = '/api/kv';
+const IS_LOCAL_FILE = (location.protocol === 'file:');
+
+async function apiCall(url, opts){
+  if(IS_LOCAL_FILE){
+    throw new Error('이 파일은 배포된 사이트 주소로 열어야 저장돼요 (pages.dev 링크 사용)');
+  }
+  let res;
+  try{
+    res = await fetch(url, opts);
+  }catch(e){
+    throw new Error('서버에 연결할 수 없어요 (인터넷 연결 확인)');
+  }
+  const ct = res.headers.get('content-type') || '';
+  let data = null;
+  if(ct.indexOf('application/json') !== -1){
+    try{ data = await res.json(); }catch(e){ data = null; }
+  } else {
+    const txt = await res.text();
+    data = { error: 'NOT_JSON', snippet: txt.slice(0, 60) };
+  }
+  return { res, data };
+}
+function apiErrorMessage(res, data){
+  if(data && data.error === 'NOT_JSON') return 'API 미배포 — functions 폴더가 GitHub에 올라갔는지 확인하세요';
+  if(data && data.error === 'KV_NOT_BOUND') return 'KV 연결 안 됨 — 설정>바인딩에 STORE_KV 추가 후 재배포하세요';
+  if(data && data.error) return data.error + ' (HTTP ' + res.status + ')';
+  return 'HTTP ' + res.status;
+}
+
 const storageAdapter = {
   async get(key, shared){
-    const res = await fetch(`${API_BASE}?key=${encodeURIComponent(key)}`);
-    if(!res.ok) throw new Error('key not found: ' + key);
-    const data = await res.json();
+    const { res, data } = await apiCall(`${API_BASE}?key=${encodeURIComponent(key)}`);
+    if(res.status === 404) throw new Error('NOT_FOUND');
+    if(!res.ok) throw new Error(apiErrorMessage(res, data));
     return { key, value: data.value, shared: !!shared };
   },
   async set(key, value, shared){
-    const res = await fetch(API_BASE, {
+    const { res, data } = await apiCall(API_BASE, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ key, value })
     });
-    if(!res.ok) throw new Error('save failed: ' + key);
+    if(!res.ok) throw new Error(apiErrorMessage(res, data));
     return { key, value, shared: !!shared };
   },
   async delete(key, shared){
-    const res = await fetch(`${API_BASE}?key=${encodeURIComponent(key)}`, { method: 'DELETE' });
-    if(!res.ok) throw new Error('delete failed: ' + key);
+    const { res, data } = await apiCall(`${API_BASE}?key=${encodeURIComponent(key)}`, { method: 'DELETE' });
+    if(!res.ok) throw new Error(apiErrorMessage(res, data));
     return { key, deleted: true, shared: !!shared };
   },
   async list(prefix, shared){
-    const res = await fetch(`${API_BASE}?prefix=${encodeURIComponent(prefix||'')}`);
-    if(!res.ok) throw new Error('list failed: ' + prefix);
-    const data = await res.json();
-    return { keys: data.keys || [], prefix, shared: !!shared };
+    const { res, data } = await apiCall(`${API_BASE}?prefix=${encodeURIComponent(prefix||'')}`);
+    if(!res.ok) throw new Error(apiErrorMessage(res, data));
+    return { keys: (data && data.keys) || [], prefix, shared: !!shared };
   }
 };
+
+// 페이지 열릴 때 서버/KV 연결 상태를 자동 점검해서 문제가 있으면 상단에 안내
+async function checkApiHealth(){
+  const banner = document.getElementById('apiBanner');
+  if(!banner) return;
+  if(IS_LOCAL_FILE){
+    banner.innerHTML = '⚠ <b>지금은 내 컴퓨터의 파일을 직접 열어본 상태예요.</b><br>' +
+      '이 상태에서는 저장이 되지 않습니다. Cloudflare에 배포한 주소' +
+      '(예: <b>yeopcheorpon-store.pages.dev</b>)로 접속해서 사용해주세요.';
+    banner.style.display = 'block';
+    return;
+  }
+  try{
+    const { res, data } = await apiCall(`${API_BASE}?key=__healthcheck__`);
+    if(res.status === 404 && data && data.error === 'NOT_FOUND'){
+      banner.style.display = 'none'; // 정상 (키만 없는 상태)
+      return;
+    }
+    if(res.ok){ banner.style.display = 'none'; return; }
+    banner.textContent = '⚠ ' + apiErrorMessage(res, data);
+    banner.style.display = 'block';
+  }catch(e){
+    banner.textContent = '⚠ ' + (e.message || '서버 연결 실패');
+    banner.style.display = 'block';
+  }
+}
 
 /* ===================== 상태 ===================== */
 let STORES = [];
@@ -572,6 +698,22 @@ function dateRangeArray(start, end){
   while(d <= endD){ out.push(toDateStr(d)); d.setDate(d.getDate()+1); }
   return out;
 }
+// 최근 n일 날짜 배열 (데이터가 없어도 축이 보이도록 0으로 채우는 용도)
+function recentDates(n){
+  const out = [];
+  const today = new Date();
+  for(let i = n - 1; i >= 0; i--){
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    out.push(toDateStr(d));
+  }
+  return out;
+}
+function byDateMap(reports){
+  const m = {};
+  (reports || []).forEach(r => { m[r.date] = r; });
+  return m;
+}
 
 /* ===================== 저장소 ===================== */
 async function loadStores(){
@@ -616,7 +758,12 @@ async function saveReportData(store, date, data){
     await storageAdapter.set(`report:${store}:${date}`, JSON.stringify(data), true);
     REPORT_CACHE[key] = data;
     return true;
-  }catch(e){ toast('저장 실패했어요. 다시 시도해주세요.', true); return false; }
+  }catch(e){
+    console.error('저장 오류:', e);
+    toast('저장 실패: ' + (e && e.message ? e.message : '알 수 없는 오류'), true);
+    checkApiHealth();
+    return false;
+  }
 }
 async function deleteReportData(store, date){
   const key = safeKey(store, date);
@@ -871,6 +1018,8 @@ function storeViewHTML(store){
     </div>
   </section>
 
+  <section class="card ov-section" id="store-analysis"></section>
+
   <section class="card table-card">
     <div class="card-head">
       <h2>일자별 통계표</h2>
@@ -928,6 +1077,8 @@ async function renderHistoryAndCharts(store){
   const reports = await loadAllReportsForStore(store);
   renderHistoryTable(store, reports);
   renderStoreCharts(store, reports);
+  const anaEl = document.getElementById('store-analysis');
+  if(anaEl) anaEl.innerHTML = analysisHTML(reports, `${store} · 전체 기간`);
 }
 
 function renderHistoryTable(store, reports){
@@ -989,96 +1140,109 @@ function destroyChart(id){
   if(CHARTS[id]){ CHARTS[id].destroy(); delete CHARTS[id]; }
 }
 function renderStoreCharts(store, reports){
-  const recent = reports.slice(-31);
-  const labels = recent.map(r => mdLabel(r.date));
+  const dates = recentDates(14);
+  const map = byDateMap(reports);
+  const labels = dates.map(mdLabel);
+  const pick = (d, f) => { const r = map[d]; return r ? clamp0(r[f]) : 0; };
 
   destroyChart('chart-sales');
   const salesEl = document.getElementById('chart-sales');
   if(salesEl){
+    const vals = dates.map(d => pick(d, 'sales'));
     CHARTS['chart-sales'] = new Chart(salesEl, {
       type: 'line',
       data: { labels, datasets: [{
-        label: '일매출', data: recent.map(r => r.sales),
+        label: '일매출', data: vals,
         borderColor: CH.purple, backgroundColor: CH.purpleLight, fill: true, tension: 0.3, pointRadius: 3
       }]},
-      options: baseChartOptions((v)=>fmtWon(v))
+      options: baseChartOptions((v)=>fmtWon(v), zeroFallback(vals, 100000))
     });
   }
 
   destroyChart('chart-inquiry');
   const inqEl = document.getElementById('chart-inquiry');
   if(inqEl){
+    const series = [
+      ['전화', 'inqPhone', CH.blue], ['문자', 'inqText', CH.teal], ['카톡플친', 'inqWalkin', CH.purple],
+      ['네이버', 'inqNaver', CH.green], ['당근', 'inqKarrot', CH.orange], ['기타', 'inqEtc', CH.gray]
+    ];
+    const all = [];
+    const datasets = series.map(([label, field, color]) => {
+      const vals = dates.map(d => pick(d, field));
+      all.push(...vals);
+      return seriesDS(label, vals, color);
+    });
     CHARTS['chart-inquiry'] = new Chart(inqEl, {
       type: 'bar',
-      data: { labels, datasets: [
-        seriesDS('전화', recent.map(r=>r.inqPhone), CH.blue),
-        seriesDS('문자', recent.map(r=>r.inqText), CH.teal),
-        seriesDS('카톡플친', recent.map(r=>r.inqWalkin), CH.purple),
-        seriesDS('네이버', recent.map(r=>r.inqNaver), CH.green),
-        seriesDS('당근', recent.map(r=>r.inqKarrot), CH.orange),
-        seriesDS('기타', recent.map(r=>r.inqEtc), CH.gray)
-      ]},
-      options: stackedChartOptions()
+      data: { labels, datasets },
+      options: stackedChartOptions(zeroFallback(all, 5))
     });
   }
 
   destroyChart('chart-activation');
   const actEl = document.getElementById('chart-activation');
   if(actEl){
+    const series = [
+      ['무선', 'actWireless', CH.purple], ['유선', 'actWired', CH.blue],
+      ['유심', 'actUsim', CH.teal], ['렌탈', 'actRental', CH.orange]
+    ];
+    const all = [];
+    const datasets = series.map(([label, field, color]) => {
+      const vals = dates.map(d => pick(d, field));
+      all.push(...vals);
+      return seriesDS(label, vals, color);
+    });
     CHARTS['chart-activation'] = new Chart(actEl, {
       type: 'bar',
-      data: { labels, datasets: [
-        seriesDS('무선', recent.map(r=>r.actWireless), CH.purple),
-        seriesDS('유선', recent.map(r=>r.actWired), CH.blue),
-        seriesDS('유심', recent.map(r=>r.actUsim), CH.teal),
-        seriesDS('렌탈', recent.map(r=>r.actRental), CH.orange)
-      ]},
-      options: stackedChartOptions()
+      data: { labels, datasets },
+      options: stackedChartOptions(zeroFallback(all, 5))
     });
   }
 
   destroyChart('chart-saletype');
   const stEl = document.getElementById('chart-saletype');
   if(stEl){
-    const sums = {
-      네이버:0, 당근:0, 일반방문:0, 기존고객:0, 옆커폰어플:0, 고객소개:0, 즉힌:0, 시세표방문:0, 광고방문:0
-    };
-    recent.forEach(r => {
-      sums['네이버'] += clamp0(r.stNaver); sums['당근'] += clamp0(r.stKarrot);
-      sums['일반방문'] += clamp0(r.stVisit); sums['기존고객'] += clamp0(r.stExisting);
-      sums['옆커폰어플'] += clamp0(r.stSideApp); sums['고객소개'] += clamp0(r.stReferral);
-      sums['즉힌'] += clamp0(r.stWalkin); sums['시세표방문'] += clamp0(r.stPriceVisit);
-      sums['광고방문'] += clamp0(r.stAdVisit);
-    });
-    const keys = Object.keys(sums);
+    const fields = [
+      ['네이버','stNaver'], ['당근','stKarrot'], ['일반방문','stVisit'], ['기존고객','stExisting'],
+      ['옆커폰어플','stSideApp'], ['고객소개','stReferral'], ['카톡플친','stWalkin'],
+      ['시세표방문','stPriceVisit'], ['광고방문','stAdVisit']
+    ];
+    const vals = fields.map(([, f]) => dates.reduce((sum, d) => sum + pick(d, f), 0));
     CHARTS['chart-saletype'] = new Chart(stEl, {
       type: 'bar',
-      data: { labels: keys, datasets: [{
-        label: '판매유형', data: keys.map(k=>sums[k]),
-        backgroundColor: keys.map((_,i)=>PALETTE[i % PALETTE.length])
+      data: { labels: fields.map(([k]) => k), datasets: [{
+        label: '판매유형', data: vals,
+        backgroundColor: fields.map((_,i)=>PALETTE[i % PALETTE.length])
       }]},
-      options: { ...baseChartOptions(), plugins: { legend: { display:false } } }
+      options: { ...baseChartOptions(undefined, zeroFallback(vals, 5)), plugins: { legend: { display:false } } }
     });
   }
 }
 function seriesDS(label, data, color){
   return { label, data, backgroundColor: color, stack: 's1' };
 }
-function baseChartOptions(yTick){
+// 값이 전부 0일 때도 축이 제대로 보이도록 최대값을 정해줍니다
+function zeroFallback(values, fallback){
+  const mx = Math.max(0, ...values.map(v => Number(v) || 0));
+  return mx > 0 ? undefined : fallback;
+}
+function baseChartOptions(yTick, suggestedMax){
+  const y = { beginAtZero: true };
+  if(yTick) y.ticks = { callback: (v)=>yTick(v) };
+  if(suggestedMax !== undefined) y.suggestedMax = suggestedMax;
   return {
     responsive: true, maintainAspectRatio: false,
     plugins: { legend: { display: false } },
-    scales: {
-      x: { grid: { display:false } },
-      y: { beginAtZero: true, ticks: yTick ? { callback: (v)=>yTick(v) } : undefined }
-    }
+    scales: { x: { grid: { display:false } }, y }
   };
 }
-function stackedChartOptions(){
+function stackedChartOptions(suggestedMax){
+  const y = { stacked:true, beginAtZero:true };
+  if(suggestedMax !== undefined) y.suggestedMax = suggestedMax;
   return {
     responsive: true, maintainAspectRatio: false,
     plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } },
-    scales: { x: { stacked:true, grid:{display:false} }, y: { stacked:true, beginAtZero:true } }
+    scales: { x: { stacked:true, grid:{display:false} }, y }
   };
 }
 
@@ -1104,38 +1268,221 @@ function exportCSV(store){
 }
 
 /* ===================== 전체 개요 ===================== */
+/* ===================== 자동 진단(분석) 엔진 ===================== */
+const LOST_PATTERNS = [
+  { key:'가격 경쟁력', words:['비싸','가격','시세','저렴','싸게','할인','더싼','타매장'] },
+  { key:'재고 부족',   words:['재고','물량','품절','없어','없음','입고'] },
+  { key:'대기 시간',   words:['대기','기다','오래','시간','바빠','혼잡'] },
+  { key:'상담 조건',   words:['조건','할부','요금제','약정','위약','지원금','보상'] },
+  { key:'단순 문의',   words:['단순','구경','문의만','알아보','비교'] }
+];
+
+function aggregateReports(reports){
+  const a = {
+    days: reports.length,
+    inq: { phone:0, text:0, walkin:0, naver:0, karrot:0, etc:0 },
+    act: { wireless:0, wired:0, usim:0, rental:0 },
+    visitors:0, sales:0, notActivated:0,
+    priceDone:0, promoDone:0, promoTarget:0,
+    lostNotes:[]
+  };
+  reports.forEach(r => {
+    a.inq.phone += clamp0(r.inqPhone); a.inq.text += clamp0(r.inqText);
+    a.inq.walkin += clamp0(r.inqWalkin); a.inq.naver += clamp0(r.inqNaver);
+    a.inq.karrot += clamp0(r.inqKarrot); a.inq.etc += clamp0(r.inqEtc);
+    a.act.wireless += clamp0(r.actWireless); a.act.wired += clamp0(r.actWired);
+    a.act.usim += clamp0(r.actUsim); a.act.rental += clamp0(r.actRental);
+    a.visitors += clamp0(r.visitors);
+    a.sales += clamp0(r.sales);
+    a.notActivated += clamp0(r.notActivated);
+    if(r.priceSheet === '완료') a.priceDone++;
+    a.promoDone += clamp0(r.promoDone);
+    a.promoTarget += clamp0(r.promoTarget);
+    if(r.lostNote && r.lostNote.trim()){
+      r.lostNote.split('\n').map(s=>s.trim()).filter(Boolean).forEach(line => {
+        a.lostNotes.push({ date: r.date, text: line, store: r.store });
+      });
+    }
+  });
+  a.inqTotal = a.inq.phone + a.inq.text + a.inq.walkin + a.inq.naver + a.inq.karrot + a.inq.etc;
+  a.actTotal = a.act.wireless + a.act.wired + a.act.usim + a.act.rental;
+  return a;
+}
+
+function classifyLostNotes(notes){
+  const counts = {};
+  LOST_PATTERNS.forEach(p => { counts[p.key] = 0; });
+  counts['기타'] = 0;
+  notes.forEach(n => {
+    let matched = false;
+    for(const p of LOST_PATTERNS){
+      if(p.words.some(w => n.text.indexOf(w) !== -1)){ counts[p.key]++; matched = true; break; }
+    }
+    if(!matched) counts['기타']++;
+  });
+  return counts;
+}
+
+const LOST_ADVICE = {
+  '가격 경쟁력': '주변 매장 시세를 확인하고, 가격 외 혜택(사은품·결합할인·장기혜택)으로 설득하는 스크립트를 준비하세요.',
+  '재고 부족': '인기 모델 재고를 미리 확보하거나, 입고 예정일을 안내해 예약으로 잡아두세요.',
+  '대기 시간': '피크 시간대 인력 배치를 조정하고, 대기 고객에게 예상 시간을 안내해 이탈을 막으세요.',
+  '상담 조건': '요금제·할부 조건 설명 자료를 정비하고, 조건별 시뮬레이션을 즉시 보여줄 수 있게 준비하세요.',
+  '단순 문의': '단순 문의도 연락처를 확보해 재방문 유도 문자를 보내면 전환으로 이어질 수 있어요.',
+  '기타': '사유가 다양해요. 기록을 조금 더 구체적으로 남기면 패턴 분석이 정확해집니다.'
+};
+
+function buildInsights(a){
+  const out = [];
+  const pct = (n, d) => d > 0 ? Math.round((n/d)*1000)/10 : 0;
+
+  if(a.inqTotal === 0 && a.visitors === 0){
+    out.push({ level:'info', title:'아직 분석할 자료가 없어요', detail:'점장님들이 며칠 입력하면 이 자리에 자동으로 진단이 나옵니다.' });
+    return out;
+  }
+
+  const visitRate = pct(a.visitors, a.inqTotal);
+  if(a.inqTotal > 0){
+    if(visitRate < 40) out.push({ level:'bad', title:`유입률 ${visitRate}% — 낮음`, detail:`문의 ${a.inqTotal}건 중 ${a.visitors}명만 방문했어요. 전화·문자 응대 스크립트와 방문 유도 멘트를 점검해보세요.` });
+    else if(visitRate < 70) out.push({ level:'warn', title:`유입률 ${visitRate}% — 보통`, detail:'문의를 방문으로 연결하는 비율을 조금 더 올릴 여지가 있어요.' });
+    else out.push({ level:'good', title:`유입률 ${visitRate}% — 양호`, detail:'문의를 방문으로 잘 연결하고 있어요.' });
+  }
+
+  const closeRate = pct(a.actTotal, a.visitors);
+  if(a.visitors > 0){
+    if(closeRate < 40) out.push({ level:'bad', title:`개통 전환율 ${closeRate}% — 낮음`, detail:`방문 ${a.visitors}명 중 ${a.actTotal}건 개통. 미개통 ${a.notActivated}건의 사유를 확인하고 클로징 상담 역량 점검이 필요해요.` });
+    else if(closeRate < 65) out.push({ level:'warn', title:`개통 전환율 ${closeRate}% — 보통`, detail:'방문 고객을 개통까지 끌고 가는 힘을 더 키울 수 있어요.' });
+    else out.push({ level:'good', title:`개통 전환율 ${closeRate}% — 우수`, detail:'방문 고객 클로징이 잘 되고 있어요.' });
+  }
+
+  if(a.inqTotal > 0){
+    const ch = [
+      { name:'전화', v:a.inq.phone }, { name:'문자', v:a.inq.text },
+      { name:'카톡플친', v:a.inq.walkin }, { name:'네이버', v:a.inq.naver },
+      { name:'당근', v:a.inq.karrot }
+    ];
+    const top = ch.slice().sort((x,y)=>y.v-x.v)[0];
+    const dead = ch.filter(c => c.v === 0).map(c => c.name);
+    out.push({ level:'info', title:`주력 문의 채널: ${top.name} (${top.v}건 · 전체의 ${pct(top.v, a.inqTotal)}%)`,
+      detail: dead.length ? `반면 ${dead.join(', ')} 채널은 문의가 0건이에요. 해당 채널 노출·광고를 점검하면 문의량을 늘릴 수 있어요.` : '모든 채널에서 문의가 들어오고 있어요.' });
+    if(pct(top.v, a.inqTotal) >= 70){
+      out.push({ level:'warn', title:`${top.name} 채널 의존도 높음`, detail:`문의의 ${pct(top.v, a.inqTotal)}%가 한 채널에 몰려 있어요. 그 채널이 막히면 매출이 크게 흔들릴 수 있으니 채널 분산이 필요해요.` });
+    }
+  }
+
+  if(a.actTotal > 0){
+    const combo = a.act.wired + a.act.rental;
+    const comboRate = pct(combo, a.actTotal);
+    if(comboRate === 0) out.push({ level:'bad', title:'유선·렌탈 개통 0건', detail:'무선 단독 판매만 이뤄지고 있어요. 인터넷/TV 결합, 렌탈 상품을 붙이면 건당 수익이 크게 올라갑니다. 결합 상담 교육이 필요해 보여요.' });
+    else if(comboRate < 20) out.push({ level:'warn', title:`유선·렌탈 비중 ${comboRate}%`, detail:'결합 상품 판매 여지가 더 있어요. 무선 상담 시 결합 제안을 습관화해보세요.' });
+    else out.push({ level:'good', title:`유선·렌탈 비중 ${comboRate}%`, detail:'결합 상품 판매가 잘 이뤄지고 있어요.' });
+  }
+
+  if(a.days > 0){
+    const priceRate = pct(a.priceDone, a.days);
+    if(priceRate < 70) out.push({ level:'warn', title:`시세표 업로드 ${priceRate}% (${a.priceDone}/${a.days}일)`, detail:'시세표 노출이 빠지면 네이버·당근 유입이 줄어듭니다. 오전 업로드 습관화가 필요해요.' });
+    if(a.promoTarget > 0){
+      const promoRate = pct(a.promoDone, a.promoTarget);
+      if(promoRate < 70) out.push({ level:'warn', title:`광고·문자영업 이행률 ${promoRate}%`, detail:'문자영업이 빠지면 재방문·기존고객 매출이 줄어듭니다.' });
+    }
+  }
+
+  if(a.lostNotes.length > 0){
+    const counts = classifyLostNotes(a.lostNotes);
+    const sorted = Object.entries(counts).filter(([,v])=>v>0).sort((x,y)=>y[1]-x[1]);
+    if(sorted.length){
+      const [topKey, topVal] = sorted[0];
+      out.push({ level:'bad', title:`놓친 고객 최다 사유: ${topKey} (${topVal}건 / 총 ${a.lostNotes.length}건)`, detail: LOST_ADVICE[topKey] || '' });
+    }
+  }
+
+  return out;
+}
+
+function analysisHTML(reports, scopeLabel){
+  const a = aggregateReports(reports);
+  const insights = buildInsights(a);
+  const counts = classifyLostNotes(a.lostNotes);
+  const lostRows = Object.entries(counts).filter(([,v])=>v>0).sort((x,y)=>y[1]-x[1]);
+  const maxLost = lostRows.length ? lostRows[0][1] : 1;
+
+  const insightHTML = insights.map(i => `
+    <div class="insight insight-${i.level}">
+      <div class="insight-title">${esc(i.title)}</div>
+      <div class="insight-detail">${esc(i.detail)}</div>
+    </div>`).join('');
+
+  const lostHTML = a.lostNotes.length === 0
+    ? `<p class="hint">기록된 놓친 고객 사유가 없어요.</p>`
+    : `<div class="lost-bars">${lostRows.map(([k,v]) => `
+        <div class="lost-bar-row">
+          <span class="lost-bar-label">${esc(k)}</span>
+          <span class="lost-bar-track"><span class="lost-bar-fill" style="width:${Math.round(v/maxLost*100)}%"></span></span>
+          <span class="lost-bar-val">${v}건</span>
+        </div>`).join('')}</div>
+      <details class="lost-detail-list"><summary>원문 ${a.lostNotes.length}건 모두 보기</summary>
+        <ul>${a.lostNotes.slice(-40).reverse().map(n => `<li><b>${esc(mdLabel(n.date))}</b>${n.store ? ' · ' + esc(n.store) : ''} — ${esc(n.text)}</li>`).join('')}</ul>
+      </details>`;
+
+  return `
+    <div class="analysis-head">
+      <h2>🔍 자동 진단 <span class="hint" style="font-weight:500">— ${esc(scopeLabel)}</span></h2>
+    </div>
+    <div class="insight-grid">${insightHTML}</div>
+    <h3 style="margin:18px 0 10px">놓친 고객 사유 분석</h3>
+    ${lostHTML}`;
+}
+
 async function renderOverview(){
   const main = document.getElementById('main');
   const today = todayStr();
   const startDefault = toDateStr(new Date(Date.now() - 13*24*60*60*1000));
   main.innerHTML = `
-  <section class="card">
-    <h2>매장 비교 — 일자별 순위</h2>
-    <label class="f-label" style="max-width:220px">기준 날짜
-      <input type="date" id="ov-date" value="${today}">
-    </label>
+  <section class="card ov-section">
+    <div class="card-head">
+      <h2>📋 일자별 순위 <span class="hint" style="font-weight:500">— 일보고용</span></h2>
+      <label class="f-label" style="max-width:200px;margin:0">기준 날짜
+        <input type="date" id="ov-date" value="${today}">
+      </label>
+    </div>
     <div class="table-wrap">
-      <table id="overview-table">
+      <table id="overview-table" class="big-table">
         <thead><tr>
-          <th>순위</th><th>매장</th><th>보고</th><th>총문의</th><th>내방인원</th><th>개통건</th><th>개통률</th><th>일매출</th>
+          <th>순위</th><th>매장</th><th>보고</th><th>총문의</th><th>내방</th><th>개통</th><th>개통률</th><th>일매출</th>
         </tr></thead>
         <tbody id="overview-body"></tbody>
       </table>
     </div>
   </section>
 
-  <section class="card">
-    <div class="card-head"><h2>매장 비교 — 기간 통계</h2></div>
-    <div class="form-grid form-grid-3" style="max-width:420px">
-      <label class="f-label">시작일 <input type="date" id="ov-start" value="${startDefault}"></label>
-      <label class="f-label">종료일 <input type="date" id="ov-end" value="${today}"></label>
+  <section class="card ov-section">
+    <div class="card-head">
+      <h2>📈 전체 추이 &amp; 기간 통계</h2>
+      <div style="display:flex;gap:10px">
+        <label class="f-label" style="margin:0">시작일 <input type="date" id="ov-start" value="${startDefault}"></label>
+        <label class="f-label" style="margin:0">종료일 <input type="date" id="ov-end" value="${today}"></label>
+      </div>
     </div>
+    <div id="ov-nodata" class="no-data-note" style="display:none">
+      아직 제출된 자료가 없어서 모든 값이 0으로 표시되고 있어요. 점장님들이 입력을 시작하면 이 그래프에 실제 추이가 그려집니다.
+    </div>
+    <div class="kpi-row" id="ov-kpi"></div>
     <div class="chart-grid">
-      <div class="chart-box" style="height:290px;grid-column:1/-1"><h3>매장별 일매출 추이</h3><canvas id="chart-ov-sales"></canvas></div>
-      <div class="chart-box" style="height:290px"><h3>매장별 문의 채널 비교 (기간 합계)</h3><canvas id="chart-ov-inquiry"></canvas></div>
-      <div class="chart-box" style="height:290px"><h3>매장별 개통유형 비교 · 무선/유선/유심/렌탈 (기간 합계)</h3><canvas id="chart-ov-activation"></canvas></div>
+      <div class="chart-box" style="height:300px;grid-column:1/-1"><h3>전체 매장 합계 — 일별 매출 추이</h3><canvas id="chart-ov-total-sales"></canvas></div>
+      <div class="chart-box" style="height:290px"><h3>전체 매장 합계 — 일별 문의 / 내방 / 개통</h3><canvas id="chart-ov-total-funnel"></canvas></div>
+      <div class="chart-box" style="height:290px"><h3>매장별 일매출 추이</h3><canvas id="chart-ov-sales"></canvas></div>
     </div>
-  </section>`;
+  </section>
+
+  <section class="card ov-section">
+    <h2>🏪 매장별 비교 (기간 합계)</h2>
+    <div class="chart-grid">
+      <div class="chart-box" style="height:290px"><h3>매장별 문의 채널 비교</h3><canvas id="chart-ov-inquiry"></canvas></div>
+      <div class="chart-box" style="height:290px"><h3>매장별 개통유형 비교 · 무선/유선/유심/렌탈</h3><canvas id="chart-ov-activation"></canvas></div>
+    </div>
+  </section>
+
+  <section class="card ov-section" id="ov-analysis"></section>`;
 
   document.getElementById('ov-date').onchange = renderOverviewBody;
   const startEl = document.getElementById('ov-start');
@@ -1156,46 +1503,147 @@ async function renderOverviewBody(){
     rows.push({ store, rep });
   }
   rows.sort((a,b) => (b.rep ? b.rep.sales : -1) - (a.rep ? a.rep.sales : -1));
+
   if(STORES.length === 0){
-    body.innerHTML = `<tr><td colspan="8" class="empty-row">등록된 매장이 없어요. 상단에서 '+ 매장 추가'를 눌러주세요.</td></tr>`;
-  } else {
-    body.innerHTML = rows.map(({store, rep}, i) => {
-      if(!rep){
-        return `<tr><td><span class="rank-chip">${i+1}</span></td><td>${esc(store)}</td><td colspan="6" class="empty-row">${date} 보고 없음</td></tr>`;
-      }
-      const t = computeTotals(rep);
-      return `<tr>
-        <td><span class="rank-chip">${i+1}</span></td><td>${esc(store)}</td><td>✅</td><td>${fmtNum(t.inqTotal)}</td><td>${fmtNum(rep.visitors)}</td>
-        <td>${fmtNum(t.actTotal)}</td><td>${t.activationRate}%</td><td>${fmtWon(rep.sales)}</td>
-      </tr>`;
-    }).join('');
+    body.innerHTML = `<tr><td colspan="8" class="empty-row">등록된 매장이 없어요.</td></tr>`;
+    return;
   }
+
+  const tot = { inq:0, vis:0, act:0, sales:0, reported:0 };
+  const html = rows.map(({store, rep}, i) => {
+    if(!rep){
+      return `<tr class="no-report">
+        <td><span class="rank-chip">${i+1}</span></td>
+        <td class="store-name">${esc(store)}</td>
+        <td>—</td><td>0</td><td>0</td><td>0</td><td>0%</td><td>0원</td>
+      </tr>`;
+    }
+    const t = computeTotals(rep);
+    tot.inq += t.inqTotal; tot.vis += clamp0(rep.visitors);
+    tot.act += t.actTotal; tot.sales += clamp0(rep.sales); tot.reported++;
+    return `<tr>
+      <td><span class="rank-chip">${i+1}</span></td>
+      <td class="store-name">${esc(store)}</td>
+      <td>✅</td>
+      <td>${fmtNum(t.inqTotal)}</td>
+      <td>${fmtNum(rep.visitors)}</td>
+      <td>${fmtNum(t.actTotal)}</td>
+      <td>${t.activationRate}%</td>
+      <td>${fmtWon(rep.sales)}</td>
+    </tr>`;
+  }).join('');
+
+  const totRate = tot.inq > 0 ? Math.round((tot.act/tot.inq)*1000)/10 : 0;
+  const totalRow = `<tr class="total-row">
+    <td></td><td>합계</td><td>${tot.reported}/${STORES.length}</td>
+    <td>${fmtNum(tot.inq)}</td><td>${fmtNum(tot.vis)}</td><td>${fmtNum(tot.act)}</td>
+    <td>${totRate}%</td><td>${fmtWon(tot.sales)}</td>
+  </tr>`;
+
+  body.innerHTML = html + totalRow;
 }
 async function renderOverviewCharts(start, end){
   if(STORES.length === 0) return;
   const dates = dateRangeArray(start, end);
   const storeReportsMap = {};
+  let anyData = false;
+  const inRange = [];
   for(const s of STORES){
     const reports = await loadAllReportsForStore(s);
-    const byDate = {};
-    reports.forEach(r => { byDate[r.date] = r; });
-    storeReportsMap[s] = byDate;
+    if(reports.length) anyData = true;
+    storeReportsMap[s] = byDateMap(reports);
+    reports.forEach(r => { if(dates.indexOf(r.date) !== -1) inRange.push(r); });
+  }
+
+  const anaEl = document.getElementById('ov-analysis');
+  if(anaEl) anaEl.innerHTML = analysisHTML(inRange, `전체 매장 · ${mdLabel(start)}~${mdLabel(end)}`);
+  const labels = dates.map(mdLabel);
+  const val = (s, d, f) => { const r = storeReportsMap[s][d]; return r ? clamp0(r[f]) : 0; };
+  const totalPerDay = (f) => dates.map(d => STORES.reduce((sum, s) => sum + val(s, d, f), 0));
+
+  const note = document.getElementById('ov-nodata');
+  if(note) note.style.display = anyData ? 'none' : 'block';
+
+  // KPI 카드 (기간 합계)
+  const totSales = totalPerDay('sales').reduce((a,b)=>a+b,0);
+  const inqFields = ['inqPhone','inqText','inqWalkin','inqNaver','inqKarrot','inqEtc'];
+  const actFields = ['actWireless','actWired','actUsim','actRental'];
+  const totInq = inqFields.reduce((sum,f) => sum + totalPerDay(f).reduce((a,b)=>a+b,0), 0);
+  const totAct = actFields.reduce((sum,f) => sum + totalPerDay(f).reduce((a,b)=>a+b,0), 0);
+  const totVis = totalPerDay('visitors').reduce((a,b)=>a+b,0);
+  const actRate = totInq > 0 ? Math.round((totAct/totInq)*1000)/10 : 0;
+  const possible = dates.length * STORES.length;
+  let submitted = 0;
+  dates.forEach(d => STORES.forEach(s => { if(storeReportsMap[s][d]) submitted++; }));
+  const submitRate = possible > 0 ? Math.round((submitted/possible)*100) : 0;
+
+  const kpi = document.getElementById('ov-kpi');
+  if(kpi){
+    kpi.innerHTML = `
+      <div class="kpi-card"><span class="kpi-num">${fmtNum(totSales)}</span><span class="kpi-label">기간 총매출(원)</span></div>
+      <div class="kpi-card"><span class="kpi-num">${fmtNum(totInq)}</span><span class="kpi-label">총 문의건</span></div>
+      <div class="kpi-card"><span class="kpi-num">${fmtNum(totVis)}</span><span class="kpi-label">총 내방인원</span></div>
+      <div class="kpi-card"><span class="kpi-num">${fmtNum(totAct)}</span><span class="kpi-label">총 개통건</span></div>
+      <div class="kpi-card"><span class="kpi-num">${actRate}%</span><span class="kpi-label">개통률 · 보고율 ${submitRate}%</span></div>`;
+  }
+
+  // 전체 매장 합계 — 일별 매출 추이
+  destroyChart('chart-ov-total-sales');
+  const tsEl = document.getElementById('chart-ov-total-sales');
+  if(tsEl){
+    const vals = totalPerDay('sales');
+    CHARTS['chart-ov-total-sales'] = new Chart(tsEl, {
+      type: 'line',
+      data: { labels, datasets: [{
+        label: '전체 합계 매출', data: vals,
+        borderColor: CH.purple, backgroundColor: CH.purpleLight, fill: true, tension: 0.3, pointRadius: 3
+      }]},
+      options: baseChartOptions((v)=>fmtWon(v), zeroFallback(vals, 100000))
+    });
+  }
+
+  // 전체 매장 합계 — 문의 / 내방 / 개통
+  destroyChart('chart-ov-total-funnel');
+  const fnEl = document.getElementById('chart-ov-total-funnel');
+  if(fnEl){
+    const inqVals = dates.map((d,i) => inqFields.reduce((sum,f) => sum + totalPerDay(f)[i], 0));
+    const visVals = totalPerDay('visitors');
+    const actVals = dates.map((d,i) => actFields.reduce((sum,f) => sum + totalPerDay(f)[i], 0));
+    CHARTS['chart-ov-total-funnel'] = new Chart(fnEl, {
+      type: 'line',
+      data: { labels, datasets: [
+        { label:'문의', data: inqVals, borderColor: CH.blue, backgroundColor: CH.blue, tension:0.3, pointRadius:2, fill:false },
+        { label:'내방', data: visVals, borderColor: CH.orange, backgroundColor: CH.orange, tension:0.3, pointRadius:2, fill:false },
+        { label:'개통', data: actVals, borderColor: CH.green, backgroundColor: CH.green, tension:0.3, pointRadius:2, fill:false }
+      ]},
+      options: {
+        ...baseChartOptions(undefined, zeroFallback([...inqVals, ...visVals, ...actVals], 5)),
+        plugins:{ legend:{ position:'bottom', labels:{ boxWidth:12, font:{size:11} } } }
+      }
+    });
   }
 
   destroyChart('chart-ov-sales');
   const salesEl = document.getElementById('chart-ov-sales');
   if(salesEl){
-    const datasets = STORES.map((s,i) => ({
-      label: s,
-      data: dates.map(d => storeReportsMap[s][d] ? storeReportsMap[s][d].sales : 0),
-      borderColor: PALETTE[i % PALETTE.length],
-      backgroundColor: PALETTE[i % PALETTE.length],
-      tension: 0.3, pointRadius: 2, fill:false
-    }));
+    const all = [];
+    const datasets = STORES.map((s,i) => {
+      const vals = dates.map(d => val(s, d, 'sales'));
+      all.push(...vals);
+      return {
+        label: s, data: vals,
+        borderColor: PALETTE[i % PALETTE.length],
+        backgroundColor: PALETTE[i % PALETTE.length],
+        tension: 0.3, pointRadius: 2, fill:false
+      };
+    });
     CHARTS['chart-ov-sales'] = new Chart(salesEl, {
       type: 'line',
-      data: { labels: dates.map(mdLabel), datasets },
-      options: { ...baseChartOptions((v)=>fmtWon(v)), plugins:{ legend:{ position:'bottom', labels:{ boxWidth:12, font:{size:11} } } } }
+      data: { labels, datasets },
+      options: {
+        ...baseChartOptions((v)=>fmtWon(v), zeroFallback(all, 100000)),
+        plugins:{ legend:{ position:'bottom', labels:{ boxWidth:12, font:{size:11} } } }
+      }
     });
   }
 
@@ -1223,7 +1671,7 @@ async function renderOverviewCharts(start, end){
         { label:'당근', data: sums.map(o=>o.karrot), backgroundColor: CH.orange, stack:'s1' },
         { label:'기타', data: sums.map(o=>o.etc), backgroundColor: CH.gray, stack:'s1' }
       ]},
-      options: stackedChartOptions()
+      options: stackedChartOptions(zeroFallback(sums.flatMap(o=>Object.values(o)), 5))
     });
   }
 
@@ -1249,7 +1697,7 @@ async function renderOverviewCharts(start, end){
         { label:'유심', data: sums.map(o=>o.usim), backgroundColor: CH.teal, stack:'s1' },
         { label:'렌탈', data: sums.map(o=>o.rental), backgroundColor: CH.orange, stack:'s1' }
       ]},
-      options: stackedChartOptions()
+      options: stackedChartOptions(zeroFallback(sums.flatMap(o=>Object.values(o)), 5))
     });
   }
 }
@@ -1262,20 +1710,30 @@ async function initAdmin(){
 }
 
 /* ===================== 매장 입력 모드 ===================== */
-document.getElementById('dateLabel').textContent = new Date().toLocaleDateString('ko-KR', {month:'long', day:'numeric', weekday:'long'});
-
+let INPUT_DATE = todayStr();
 let inputState = { store: '' };
 let manwonInput = 0;
 
+function updateDateLabel(){
+  const d = new Date(INPUT_DATE + 'T00:00:00');
+  document.getElementById('dateLabel').textContent =
+    isNaN(d) ? '' : d.toLocaleDateString('ko-KR', {month:'long', day:'numeric', weekday:'long'});
+  const isToday = INPUT_DATE === todayStr();
+  document.getElementById('pastNotice').style.display = isToday ? 'none' : 'block';
+  document.getElementById('pastNotice').textContent =
+    INPUT_DATE > todayStr() ? '📅 미래 날짜를 작성하는 중이에요' : '📝 지난 날짜를 수정하는 중이에요';
+}
+
 function emptyInputState(store){
-  const base = emptyReport(store, todayStr());
+  const base = emptyReport(store, INPUT_DATE);
   base.priceTime = null;
   base.ads = { mon:false, wed:false, fri:false, sat:false };
   return base;
 }
 
+// 선택한 날짜가 속한 주(월요일 기준)로 광고 발송 기록을 저장합니다
 function weekStorageKey(store){
-  const d = new Date();
+  const d = new Date(INPUT_DATE + 'T00:00:00');
   const day = d.getDay();
   const monday = new Date(d); monday.setDate(d.getDate() - ((day+6)%7));
   return 'week:' + store + ':' + toDateStr(monday);
@@ -1296,13 +1754,14 @@ async function loadInputState(){
   const store = inputState.store;
   inputState = emptyInputState(store);
   try{
-    const rep = await loadReport(store, todayStr());
+    const rep = await loadReport(store, INPUT_DATE);
     if(rep) Object.assign(inputState, rep);
   }catch(e){}
   try{
     inputState.ads = await loadWeekAds(store);
   }catch(e){}
   manwonInput = Math.round((inputState.sales||0)/10000);
+  updateDateLabel();
   renderInput();
 }
 
@@ -1312,10 +1771,11 @@ async function saveInputState(){
   inputState.notActivated = Math.max(0, (inputState.visitors||0) - actTotal);
   inputState.convRate = inputState.visitors > 0 ? Math.round(actTotal/inputState.visitors*100) : 0;
   inputState.reported = true;
+  inputState.date = INPUT_DATE;
   const adsDone = Object.values(inputState.ads || {}).filter(Boolean).length;
   inputState.promoDone = adsDone;
   inputState.promoTarget = 4;
-  await saveReportData(inputState.store, todayStr(), inputState);
+  await saveReportData(inputState.store, INPUT_DATE, inputState);
   await saveWeekAds();
   updateMonthCum();
 }
@@ -1324,7 +1784,7 @@ async function updateMonthCum(){
   if(!inputState.store) return;
   try{
     const dates = await listDatesForStore(inputState.store);
-    const ym = todayStr().slice(0,7);
+    const ym = INPUT_DATE.slice(0,7);
     let cum = 0;
     for(const d of dates){
       if(d.indexOf(ym) === 0){
@@ -1335,6 +1795,23 @@ async function updateMonthCum(){
     document.getElementById('cumBadge').textContent = Math.round(cum/10000).toLocaleString();
   }catch(e){}
 }
+
+document.getElementById('inputDate').value = INPUT_DATE;
+updateDateLabel();
+
+document.getElementById('inputDate').addEventListener('change', e=>{
+  if(!e.target.value) return;
+  INPUT_DATE = e.target.value;
+  updateDateLabel();
+  if(inputState.store) loadInputState();
+});
+
+document.getElementById('todayBtn').addEventListener('click', ()=>{
+  INPUT_DATE = todayStr();
+  document.getElementById('inputDate').value = INPUT_DATE;
+  updateDateLabel();
+  if(inputState.store) loadInputState();
+});
 
 document.getElementById('storeSelect').addEventListener('change', e=>{
   inputState = { store: e.target.value };
@@ -1431,14 +1908,15 @@ function renderInput(){
 
   const priceBtn = document.getElementById('priceToggle');
   const warn = document.getElementById('deadlineWarn');
+  const isToday = INPUT_DATE === todayStr();
   const nowH = new Date().getHours();
   const priceDone = inputState.priceSheet === '완료';
   priceBtn.textContent = priceDone ? ('✓ 업로드 완료 (' + (inputState.priceTime||'') + ')') : '오전 업로드 완료로 체크';
   priceBtn.classList.toggle('done', priceDone);
-  warn.style.display = (!priceDone && nowH >= 12) ? 'block' : 'none';
+  warn.style.display = (!priceDone && isToday && nowH >= 12) ? 'block' : 'none';
 
-  const todayIdx = new Date().getDay();
-  const dayKeyToday = {1:'mon',3:'wed',5:'fri',6:'sat'}[todayIdx];
+  const selDay = new Date(INPUT_DATE + 'T00:00:00').getDay();
+  const dayKeyToday = {1:'mon',3:'wed',5:'fri',6:'sat'}[selDay];
   document.querySelectorAll('.day-chip').forEach(chip=>{
     const day = chip.dataset.day;
     chip.classList.toggle('done', !!(inputState.ads && inputState.ads[day]));
@@ -1479,7 +1957,7 @@ document.getElementById('submitBtn').addEventListener('click', async ()=>{
   const mm = String(now.getMinutes()).padStart(2,'0');
   btn.textContent = '🎉 제출 완료!';
   btn.classList.add('done');
-  hint.textContent = `${hh}:${mm}에 제출됨 · 관리자 분석에 반영됐어요`;
+  hint.textContent = `${mdLabel(INPUT_DATE)} 자료가 ${hh}:${mm}에 제출됐어요 · 관리자 분석에 반영됨`;
   setTimeout(()=>{
     btn.textContent = '✅ 제출하기';
     btn.classList.remove('done');
@@ -1530,6 +2008,7 @@ document.getElementById('pwSubmit').addEventListener('click', checkPassword);
 document.getElementById('pwInput').addEventListener('keydown', e => { if(e.key === 'Enter') checkPassword(); });
 
 window.addEventListener('DOMContentLoaded', () => {
+  checkApiHealth();
   initStoreDropdown();
 });
 
