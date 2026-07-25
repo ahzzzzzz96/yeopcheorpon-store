@@ -235,6 +235,21 @@ if(typeof Chart === 'undefined'){
   background:#FDECEC;border:1px solid #F5C2C2;color:#8A1F1F;border-radius:10px;
   padding:12px 14px;font-size:12.5px;font-weight:700;line-height:1.5;text-align:center;
 }
+.admin-scope .note-flag{
+  display:inline-block;background:#FDECEC;color:var(--red);font-size:10.5px;font-weight:800;
+  padding:1px 6px;border-radius:999px;margin-left:4px;
+}
+.admin-scope tr.note-row td{
+  background:#FEF7F7;border-top:none;white-space:normal;padding:8px 12px 12px;
+}
+.admin-scope .note-label{
+  display:inline-block;font-size:11.5px;font-weight:800;color:var(--red);
+  margin-right:8px;vertical-align:top;padding-top:3px;
+}
+.admin-scope .note-item{
+  display:inline-block;background:#fff;border:1px solid #F5C2C2;border-radius:8px;
+  padding:5px 10px;margin:0 6px 5px 0;font-size:12.5px;color:var(--ink);line-height:1.5;
+}
 .admin-scope .big-table{font-size:15px;}
 .admin-scope .big-table thead th{font-size:13.5px;padding:13px 12px;}
 .admin-scope .big-table tbody td{padding:15px 12px;font-size:16px;font-weight:600;}
@@ -384,14 +399,6 @@ if(typeof Chart === 'undefined'){
 .admin-scope .toast.error{background:var(--red);}
 .admin-scope ::selection{background:var(--purple-light);}
 
-
-.ov-edit{ width:74px; max-width:84px; padding:6px 7px; border:1px solid var(--line); border-radius:8px; font-size:13px; font-family:'Space Grotesk','Noto Sans KR',sans-serif; text-align:right; background:#FCFBFE; color:var(--text); }
-.ov-edit:hover{ border-color:var(--purple); }
-.ov-edit:focus{ outline:2px solid var(--purple); outline-offset:1px; border-color:var(--purple); background:#fff; }
-.ov-edit.ov-sales{ width:106px; max-width:118px; }
-.won-suffix{ font-size:11px; color:var(--muted); margin-left:3px; }
-#overview-body td .ov-rate, #overview-body td.ov-rate{ font-weight:700; }
-#overview-body td{ vertical-align:middle; }
 </style>
 </head>
 <body>
@@ -632,8 +639,11 @@ async function apiCall(url, opts){
   return { res, data };
 }
 function apiErrorMessage(res, data){
-  if(data && data.error === 'NOT_JSON') return 'API 미배포 — functions 폴더가 GitHub에 올라갔는지 확인하세요';
+  if(data && data.error === 'NOT_JSON') return '서버 응답 오류 — 잠시 후 다시 시도해주세요';
   if(data && data.error === 'KV_NOT_BOUND') return 'KV 연결 안 됨 — 설정>바인딩에 STORE_KV 추가 후 재배포하세요';
+  if(data && data.error === 'KV_RATE_LIMIT') return '너무 빠르게 저장했어요. 2~3초 뒤 다시 눌러주세요';
+  if(data && data.error === 'KV_QUOTA_EXCEEDED') return '오늘의 무료 저장 한도를 모두 썼어요 (내일 자정 초기화)';
+  if(data && data.error === 'KV_ERROR') return '저장소 오류: ' + (data.message || '알 수 없음');
   if(data && data.error) return data.error + ' (HTTP ' + res.status + ')';
   return 'HTTP ' + res.status;
 }
@@ -862,10 +872,8 @@ function parseKakaoText(text){
 
 /* ===================== 계산 ===================== */
 function computeTotals(d){
-  let inqTotal = clamp0(d.inqWalkin)+clamp0(d.inqPhone)+clamp0(d.inqText)+clamp0(d.inqNaver)+clamp0(d.inqKarrot)+clamp0(d.inqEtc);
-  let actTotal = clamp0(d.actWireless)+clamp0(d.actWired)+clamp0(d.actUsim)+clamp0(d.actRental);
-  if(d.inqTotalOv !== undefined && d.inqTotalOv !== null && d.inqTotalOv !== '') inqTotal = clamp0(d.inqTotalOv);
-  if(d.actTotalOv !== undefined && d.actTotalOv !== null && d.actTotalOv !== '') actTotal = clamp0(d.actTotalOv);
+  const inqTotal = clamp0(d.inqWalkin)+clamp0(d.inqPhone)+clamp0(d.inqText)+clamp0(d.inqNaver)+clamp0(d.inqKarrot)+clamp0(d.inqEtc);
+  const actTotal = clamp0(d.actWireless)+clamp0(d.actWired)+clamp0(d.actUsim)+clamp0(d.actRental);
   const activationRate = inqTotal > 0 ? Math.round((actTotal/inqTotal)*1000)/10 : 0;
   return { inqTotal, actTotal, activationRate };
 }
@@ -1142,8 +1150,9 @@ function renderHistoryTable(store, reports){
   const rows = [...reports].sort((a,b) => a.date < b.date ? 1 : -1);
   body.innerHTML = rows.map(r => {
     const t = computeTotals(r);
-    return `<tr data-date="${r.date}">
-      <td>${mdLabel(r.date)}</td>
+    const notes = (r.lostNote || '').split('\n').map(s => s.trim()).filter(Boolean);
+    const mainRow = `<tr data-date="${r.date}">
+      <td>${mdLabel(r.date)}${notes.length ? ` <span class="note-flag" title="놓친 고객 ${notes.length}건">📝${notes.length}</span>` : ''}</td>
       <td>${r.reported ? '✅' : '—'}</td>
       <td>${fmtNum(t.inqTotal)}</td>
       <td>${fmtNum(r.inqPhone)}</td>
@@ -1163,6 +1172,13 @@ function renderHistoryTable(store, reports){
       <td>${r.priceSheet === '완료' ? '<span class="badge ok">완료</span>' : '<span class="badge no">미완료</span>'}</td>
       <td>${r.promoDone}/${r.promoTarget}</td>
     </tr>`;
+    const noteRow = notes.length ? `<tr class="note-row">
+      <td colspan="19">
+        <span class="note-label">❌ 놓친 고객</span>
+        ${notes.map(n => `<span class="note-item">${esc(n)}</span>`).join('')}
+      </td>
+    </tr>` : '';
+    return mainRow + noteRow;
   }).join('');
 }
 
@@ -1599,7 +1615,7 @@ async function renderOverview(){
   main.innerHTML = `
   <section class="card ov-section">
     <div class="card-head">
-      <h2>📋 일자별 순위 <span class="hint" style="font-weight:500">— 숫자 칸을 눌러 바로 수정할 수 있어요 (자동 저장)</span></h2>
+      <h2>📋 일자별 순위 <span class="hint" style="font-weight:500">— 일보고용</span></h2>
       <label class="f-label" style="max-width:200px;margin:0">기준 날짜
         <input type="date" id="ov-date" value="${today}">
       </label>
@@ -1673,12 +1689,7 @@ async function renderOverviewBody(){
       return `<tr class="no-report">
         <td><span class="rank-chip">${i+1}</span></td>
         <td class="store-name">${esc(store)}</td>
-        <td>—</td>
-        <td><input class="ov-edit" type="number" min="0" data-store="${esc(store)}" data-field="inq" value="0"></td>
-        <td><input class="ov-edit" type="number" min="0" data-store="${esc(store)}" data-field="vis" value="0"></td>
-        <td><input class="ov-edit" type="number" min="0" data-store="${esc(store)}" data-field="act" value="0"></td>
-        <td class="ov-rate">0%</td>
-        <td><input class="ov-edit ov-sales" type="number" min="0" data-store="${esc(store)}" data-field="sales" value="0"><span class="won-suffix">원</span></td>
+        <td>—</td><td>0</td><td>0</td><td>0</td><td>0%</td><td>0원</td>
       </tr>`;
     }
     const t = computeTotals(rep);
@@ -1688,11 +1699,11 @@ async function renderOverviewBody(){
       <td><span class="rank-chip">${i+1}</span></td>
       <td class="store-name">${esc(store)}</td>
       <td>✅</td>
-      <td><input class="ov-edit" type="number" min="0" data-store="${esc(store)}" data-field="inq" value="${t.inqTotal}"></td>
-      <td><input class="ov-edit" type="number" min="0" data-store="${esc(store)}" data-field="vis" value="${clamp0(rep.visitors)}"></td>
-      <td><input class="ov-edit" type="number" min="0" data-store="${esc(store)}" data-field="act" value="${t.actTotal}"></td>
-      <td class="ov-rate">${t.activationRate}%</td>
-      <td><input class="ov-edit ov-sales" type="number" min="0" data-store="${esc(store)}" data-field="sales" value="${clamp0(rep.sales)}"><span class="won-suffix">원</span></td>
+      <td>${fmtNum(t.inqTotal)}</td>
+      <td>${fmtNum(rep.visitors)}</td>
+      <td>${fmtNum(t.actTotal)}</td>
+      <td>${t.activationRate}%</td>
+      <td>${fmtWon(rep.sales)}</td>
     </tr>`;
   }).join('');
 
@@ -1704,63 +1715,6 @@ async function renderOverviewBody(){
   </tr>`;
 
   body.innerHTML = html + totalRow;
-  wireOverviewEdits();
-}
-/* ===== 전체 개요 인라인 편집 (관리자) ===== */
-function ovFieldLabel(f){ return f==='inq'?'총문의':f==='act'?'개통':f==='vis'?'내방':'일매출'; }
-function wireOverviewEdits(){
-  document.querySelectorAll('#overview-body .ov-edit').forEach(inp => {
-    inp.addEventListener('change', onOverviewEdit);
-    inp.addEventListener('keydown', e => { if(e.key==='Enter'){ e.preventDefault(); inp.blur(); } });
-    inp.addEventListener('focus', () => { try{ inp.select(); }catch(_e){} });
-  });
-}
-async function onOverviewEdit(e){
-  const inp = e.target;
-  const store = inp.dataset.store, field = inp.dataset.field;
-  const val = Math.max(0, Math.round(Number(inp.value)||0));
-  inp.value = val;
-  const dEl = document.getElementById('ov-date');
-  const date = dEl ? dEl.value : '';
-  if(!date){ toast('기준 날짜를 선택해주세요', true); return; }
-  let rep = await loadReport(store, date);
-  if(!rep) rep = emptyReport(store, date);
-  rep.reported = true;
-  if(field==='inq') rep.inqTotalOv = val;
-  else if(field==='act') rep.actTotalOv = val;
-  else if(field==='vis') rep.visitors = val;
-  else if(field==='sales') rep.sales = val;
-  const ok = await saveReportData(store, date, rep);
-  if(ok){
-    const tr = inp.closest('tr');
-    if(tr){ tr.classList.remove('no-report'); if(tr.children[2]) tr.children[2].textContent = '✅'; }
-    refreshOverviewComputed();
-    toast(store + ' · ' + ovFieldLabel(field) + ' 저장됨');
-  }
-}
-function refreshOverviewComputed(){
-  const trs = document.querySelectorAll('#overview-body tr');
-  let tinq=0,tvis=0,tact=0,tsales=0,rep=0;
-  trs.forEach(tr => {
-    if(tr.classList.contains('total-row')) return;
-    const inqI = tr.querySelector('[data-field="inq"]');
-    if(!inqI) return;
-    const inq = Number(inqI.value)||0;
-    const vis = Number(tr.querySelector('[data-field="vis"]').value)||0;
-    const act = Number(tr.querySelector('[data-field="act"]').value)||0;
-    const sales = Number(tr.querySelector('[data-field="sales"]').value)||0;
-    const rate = inq>0 ? Math.round((act/inq)*1000)/10 : 0;
-    const rc = tr.querySelector('.ov-rate'); if(rc) rc.textContent = rate + '%';
-    tinq+=inq; tvis+=vis; tact+=act; tsales+=sales;
-    if(!tr.classList.contains('no-report')) rep++;
-  });
-  const totalTr = document.querySelector('#overview-body tr.total-row');
-  if(totalTr){
-    const totRate = tinq>0 ? Math.round((tact/tinq)*1000)/10 : 0;
-    totalTr.innerHTML = '<td></td><td>합계</td><td>'+rep+'/'+STORES.length+'</td>'
-      + '<td>'+fmtNum(tinq)+'</td><td>'+fmtNum(tvis)+'</td><td>'+fmtNum(tact)+'</td>'
-      + '<td>'+totRate+'%</td><td>'+fmtWon(tsales)+'</td>';
-  }
 }
 async function renderOverviewCharts(start, end){
   if(STORES.length === 0) return;
@@ -1981,8 +1935,9 @@ async function loadInputState(){
   renderInput();
 }
 
+let lastSavedAds = null;
 async function saveInputState(){
-  if(!inputState.store) return;
+  if(!inputState.store) return false;
   const actTotal = clamp0(inputState.actWireless)+clamp0(inputState.actWired)+clamp0(inputState.actUsim)+clamp0(inputState.actRental);
   inputState.notActivated = Math.max(0, (inputState.visitors||0) - actTotal);
   inputState.convRate = inputState.visitors > 0 ? Math.round(actTotal/inputState.visitors*100) : 0;
@@ -1991,9 +1946,42 @@ async function saveInputState(){
   const adsDone = Object.values(inputState.ads || {}).filter(Boolean).length;
   inputState.promoDone = adsDone;
   inputState.promoTarget = 4;
-  await saveReportData(inputState.store, INPUT_DATE, inputState);
-  await saveWeekAds();
-  updateMonthCum();
+
+  const ok = await saveReportData(inputState.store, INPUT_DATE, inputState);
+
+  // 광고 체크는 바뀌었을 때만 따로 저장 (불필요한 쓰기 절약)
+  const adsNow = JSON.stringify(inputState.ads || {});
+  if(ok && adsNow !== lastSavedAds){
+    await saveWeekAds();
+    lastSavedAds = adsNow;
+  }
+
+  updateSaveHint(ok ? '✅ 저장됨 — 다 적으셨으면 제출을 눌러주세요' : '⚠ 저장 실패 — 잠시 후 다시 시도해주세요');
+  if(ok) updateMonthCum();
+  return ok;
+}
+
+// KV 무료 한도(하루 1,000회 쓰기 / 키당 초당 1회)를 넘지 않도록,
+// 버튼을 누를 때마다 저장하지 않고 1.5초간 조작이 멈추면 한 번만 저장합니다.
+let saveTimer = null;
+let pendingSave = false;
+function scheduleSave(){
+  pendingSave = true;
+  updateSaveHint('입력 중...');
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => {
+    pendingSave = false;
+    await saveInputState();
+  }, 1500);
+}
+async function flushSave(){
+  clearTimeout(saveTimer);
+  pendingSave = false;
+  return await saveInputState();
+}
+function updateSaveHint(msg){
+  const el = document.getElementById('submitHint');
+  if(el) el.textContent = msg;
 }
 
 async function updateMonthCum(){
@@ -2045,7 +2033,7 @@ document.querySelectorAll('.step-btn').forEach(btn=>{
     const d = parseInt(btn.dataset.d);
     inputState[ctr] = Math.max(0, (inputState[ctr]||0) + d);
     renderInput();
-    saveInputState();
+    scheduleSave();
   });
 });
 
@@ -2061,7 +2049,7 @@ document.getElementById('keypad').addEventListener('click', e=>{
   }
   inputState.sales = manwonInput * 10000;
   renderInput();
-  saveInputState();
+  scheduleSave();
 });
 
 document.getElementById('priceToggle').addEventListener('click', ()=>{
@@ -2070,14 +2058,14 @@ document.getElementById('priceToggle').addEventListener('click', ()=>{
   inputState.priceSheet = done ? '미완료' : '완료';
   inputState.priceTime = !done ? new Date().toTimeString().slice(0,5) : null;
   renderInput();
-  saveInputState();
+  scheduleSave();
 });
 
 document.getElementById('lostNotes').addEventListener('input', e=>{
   if(!inputState.store) return;
   inputState.lostNote = e.target.value;
   updateLostBadge();
-  saveInputState();
+  scheduleSave();
 });
 
 document.getElementById('dayChips').addEventListener('click', e=>{
@@ -2087,7 +2075,7 @@ document.getElementById('dayChips').addEventListener('click', e=>{
   const day = chip.dataset.day;
   inputState.ads[day] = !inputState.ads[day];
   renderInput();
-  saveInputState();
+  scheduleSave();
 });
 
 function updateLostBadge(){
@@ -2165,9 +2153,15 @@ async function initStoreDropdown(){
 document.getElementById('submitBtn').addEventListener('click', async ()=>{
   if(!inputState.store) return;
   inputState.submittedAt = new Date().toISOString();
-  await saveInputState();
   const btn = document.getElementById('submitBtn');
   const hint = document.getElementById('submitHint');
+  btn.textContent = '저장 중...';
+  const ok = await flushSave();
+  if(!ok){
+    btn.textContent = '✅ 제출하기';
+    hint.textContent = '저장에 실패했어요. 위 안내를 확인해주세요.';
+    return;
+  }
   const now = new Date();
   const hh = String(now.getHours()).padStart(2,'0');
   const mm = String(now.getMinutes()).padStart(2,'0');
