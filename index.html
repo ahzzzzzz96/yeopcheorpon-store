@@ -539,13 +539,13 @@ if(typeof Chart === 'undefined'){
   </div>
 
   <div class="card">
-    <div class="card-title"><h3>💰 일매출</h3><span class="badge">누적 <span id="cumBadge" class="num">0</span>만원</span></div>
-    <div class="amount-display num" id="amountDisplay">0<span style="font-size:16px;color:var(--muted)"> 만원</span></div>
+    <div class="card-title"><h3>💰 일매출</h3><span class="badge">이번 달 누적 <span id="cumBadge" class="num">0</span>원</span></div>
+    <div class="amount-display num" id="amountDisplay">0<span style="font-size:16px;color:var(--muted)"> 원</span></div>
     <div class="keypad" id="keypad">
       <button class="key" data-n="1">1</button><button class="key" data-n="2">2</button><button class="key" data-n="3">3</button>
       <button class="key" data-n="4">4</button><button class="key" data-n="5">5</button><button class="key" data-n="6">6</button>
       <button class="key" data-n="7">7</button><button class="key" data-n="8">8</button><button class="key" data-n="9">9</button>
-      <button class="key wide" data-n="clear">지우기</button><button class="key" data-n="0">0</button>
+      <button class="key" data-n="clear">지우기</button><button class="key" data-n="0">0</button><button class="key" data-n="00">00</button>
     </div>
   </div>
 
@@ -1882,7 +1882,7 @@ async function initAdmin(){
 /* ===================== 매장 입력 모드 ===================== */
 let INPUT_DATE = todayStr();
 let inputState = { store: '' };
-let manwonInput = 0;
+let wonInput = 0;
 
 function updateDateLabel(){
   const d = new Date(INPUT_DATE + 'T00:00:00');
@@ -1930,9 +1930,14 @@ async function loadInputState(){
   try{
     inputState.ads = await loadWeekAds(store);
   }catch(e){}
-  manwonInput = Math.round((inputState.sales||0)/10000);
+  wonInput = inputState.sales || 0;
+  isDirty = false;
   updateDateLabel();
   renderInput();
+  const hadData = !!(inputState.reported && (inputState.sales || inputState.visitors || inputState.inqPhone));
+  updateSaveHint(hadData
+    ? 'ℹ️ 저장된 내용을 불러왔어요. 수정하면 [제출하기]를 눌러 반영하세요'
+    : '입력 후 아래 [제출하기]를 누르면 저장돼요');
 }
 
 let lastSavedAds = null;
@@ -1956,28 +1961,22 @@ async function saveInputState(){
     lastSavedAds = adsNow;
   }
 
-  updateSaveHint(ok ? '✅ 저장됨 — 다 적으셨으면 제출을 눌러주세요' : '⚠ 저장 실패 — 잠시 후 다시 시도해주세요');
+  updateSaveHint(ok ? '✅ 제출 완료 — 관리자 분석에 반영됐어요' : '⚠ 저장 실패 — 잠시 후 다시 시도해주세요');
   if(ok) updateMonthCum();
   return ok;
 }
 
-// KV 무료 한도(하루 1,000회 쓰기 / 키당 초당 1회)를 넘지 않도록,
-// 버튼을 누를 때마다 저장하지 않고 1.5초간 조작이 멈추면 한 번만 저장합니다.
-let saveTimer = null;
-let pendingSave = false;
-function scheduleSave(){
-  pendingSave = true;
-  updateSaveHint('입력 중...');
-  clearTimeout(saveTimer);
-  saveTimer = setTimeout(async () => {
-    pendingSave = false;
-    await saveInputState();
-  }, 1500);
+// 서버 저장은 '제출하기'를 눌렀을 때만 합니다. (KV 쓰기 한도 절약)
+// 그 전까지는 입력값을 메모리에만 담아두고, 아직 저장 안 됐다는 표시만 합니다.
+let isDirty = false;
+function markDirty(){
+  isDirty = true;
+  updateSaveHint('✏️ 입력한 내용을 저장하려면 아래 [제출하기]를 눌러주세요');
 }
 async function flushSave(){
-  clearTimeout(saveTimer);
-  pendingSave = false;
-  return await saveInputState();
+  const ok = await saveInputState();
+  if(ok) isDirty = false;
+  return ok;
 }
 function updateSaveHint(msg){
   const el = document.getElementById('submitHint');
@@ -1996,28 +1995,38 @@ async function updateMonthCum(){
         if(rep) cum += (rep.sales || 0);
       }
     }
-    document.getElementById('cumBadge').textContent = Math.round(cum/10000).toLocaleString();
+    document.getElementById('cumBadge').textContent = cum.toLocaleString();
   }catch(e){}
 }
 
 document.getElementById('inputDate').value = INPUT_DATE;
 updateDateLabel();
 
+function confirmDiscardIfDirty(){
+  if(!isDirty) return true;
+  return confirm('아직 제출하지 않은 입력이 있어요. 제출하지 않고 이동하면 입력한 내용이 사라져요. 이동할까요?');
+}
+
 document.getElementById('inputDate').addEventListener('change', e=>{
   if(!e.target.value) return;
+  if(!confirmDiscardIfDirty()){ e.target.value = INPUT_DATE; return; }
   INPUT_DATE = e.target.value;
   updateDateLabel();
   if(inputState.store) loadInputState();
 });
 
 document.getElementById('todayBtn').addEventListener('click', ()=>{
+  if(!confirmDiscardIfDirty()) return;
   INPUT_DATE = todayStr();
   document.getElementById('inputDate').value = INPUT_DATE;
   updateDateLabel();
   if(inputState.store) loadInputState();
 });
 
+let currentStoreValue = '';
 document.getElementById('storeSelect').addEventListener('change', e=>{
+  if(!confirmDiscardIfDirty()){ e.target.value = currentStoreValue; return; }
+  currentStoreValue = e.target.value;
   inputState = { store: e.target.value };
   document.getElementById('mainContent').style.display = inputState.store ? 'flex' : 'none';
   document.getElementById('mainContent').style.flexDirection = 'column';
@@ -2033,7 +2042,7 @@ document.querySelectorAll('.step-btn').forEach(btn=>{
     const d = parseInt(btn.dataset.d);
     inputState[ctr] = Math.max(0, (inputState[ctr]||0) + d);
     renderInput();
-    scheduleSave();
+    markDirty();
   });
 });
 
@@ -2042,14 +2051,18 @@ document.getElementById('keypad').addEventListener('click', e=>{
   const btn = e.target.closest('.key');
   if(!btn) return;
   const n = btn.dataset.n;
-  if(n === 'clear'){ manwonInput = 0; }
-  else{
-    manwonInput = (manwonInput||0) * 10 + parseInt(n);
-    if(manwonInput > 999999) manwonInput = parseInt(n);
+  if(n === 'clear'){ wonInput = 0; }
+  else if(n === '00'){
+    wonInput = (wonInput||0) * 100;
+    if(wonInput > 99999999) wonInput = 0;
   }
-  inputState.sales = manwonInput * 10000;
+  else{
+    wonInput = (wonInput||0) * 10 + parseInt(n);
+    if(wonInput > 99999999) wonInput = parseInt(n);
+  }
+  inputState.sales = wonInput;
   renderInput();
-  scheduleSave();
+  markDirty();
 });
 
 document.getElementById('priceToggle').addEventListener('click', ()=>{
@@ -2058,14 +2071,14 @@ document.getElementById('priceToggle').addEventListener('click', ()=>{
   inputState.priceSheet = done ? '미완료' : '완료';
   inputState.priceTime = !done ? new Date().toTimeString().slice(0,5) : null;
   renderInput();
-  scheduleSave();
+  markDirty();
 });
 
 document.getElementById('lostNotes').addEventListener('input', e=>{
   if(!inputState.store) return;
   inputState.lostNote = e.target.value;
   updateLostBadge();
-  scheduleSave();
+  markDirty();
 });
 
 document.getElementById('dayChips').addEventListener('click', e=>{
@@ -2075,7 +2088,7 @@ document.getElementById('dayChips').addEventListener('click', e=>{
   const day = chip.dataset.day;
   inputState.ads[day] = !inputState.ads[day];
   renderInput();
-  scheduleSave();
+  markDirty();
 });
 
 function updateLostBadge(){
@@ -2108,7 +2121,7 @@ function renderInput(){
   if(document.activeElement !== lostEl){ lostEl.value = inputState.lostNote || ''; }
   updateLostBadge();
 
-  document.getElementById('amountDisplay').innerHTML = (manwonInput||0).toLocaleString() + '<span style="font-size:16px;color:var(--muted)"> 만원</span>';
+  document.getElementById('amountDisplay').innerHTML = (wonInput||0).toLocaleString() + '<span style="font-size:16px;color:var(--muted)"> 원</span>';
 
   const priceBtn = document.getElementById('priceToggle');
   const warn = document.getElementById('deadlineWarn');
