@@ -932,6 +932,323 @@ function collectFormData(store){
 }
 
 /* ===================== 탭 렌더 ===================== */
+/* ===== 주간 보고 탭 (관리자 분석) ===== */
+
+let WEEK_MONDAY = null;
+
+// 해당 날짜가 속한 주의 월요일
+function weekMondayOf(dateStr){
+  const d = new Date(dateStr + 'T00:00:00');
+  const m = new Date(d);
+  m.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+  return toDateStr(m);
+}
+
+// 월요일부터 7일치 날짜 배열
+function weekDates(monday){
+  const out = [];
+  const base = new Date(monday + 'T00:00:00');
+  for(let i = 0; i < 7; i++){
+    const x = new Date(base);
+    x.setDate(base.getDate() + i);
+    out.push(toDateStr(x));
+  }
+  return out;
+}
+
+// 7/27 ~ 8/2 형태 라벨
+function weekLabel(monday){
+  const ds = weekDates(monday);
+  return ds[0].slice(5).replace('-', '/') + ' ~ ' + ds[6].slice(5).replace('-', '/');
+}
+
+// 월요일을 n주 이동
+function weekShift(monday, n){
+  const d = new Date(monday + 'T00:00:00');
+  d.setDate(d.getDate() + n * 7);
+  return toDateStr(d);
+}
+
+const SRC_KEYS = [
+  { key:'walkin', label:'내방 문의' },
+  { key:'phone',  label:'전화' },
+  { key:'naver',  label:'네이버' },
+  { key:'karrot', label:'당근' },
+  { key:'text',   label:'문자' },
+  { key:'etc',    label:'기타' }
+];
+
+/* 매장 1곳의 한 주 실적 집계
+   내방 보정 : 개통한 손님도 매장에 온 손님이므로
+   내방 칸이 (개통 + 놓친 고객)보다 작으면 그 값으로 올려 잡는다 */
+function weekStoreStats(reports, dateSet){
+  const rows = reports.filter(r => dateSet.has(r.date));
+  const s = {
+    days: rows.length, inq: 0, visitorsRaw: 0, visitors: 0, fixed: 0,
+    act: 0, wireless: 0, wired: 0, usim: 0, rental: 0,
+    lost: 0, sales: 0, priceDone: 0,
+    src: { walkin:0, phone:0, text:0, naver:0, karrot:0, etc:0 },
+    notes: []
+  };
+  rows.forEach(r => {
+    const act  = clamp0(r.actWireless) + clamp0(r.actWired) + clamp0(r.actUsim) + clamp0(r.actRental);
+    const lost = clamp0(r.notActivated);
+    const vis  = Math.max(clamp0(r.visitors), act + lost);
+
+    s.src.walkin += clamp0(r.inqWalkin); s.src.phone  += clamp0(r.inqPhone);
+    s.src.text   += clamp0(r.inqText);   s.src.naver  += clamp0(r.inqNaver);
+    s.src.karrot += clamp0(r.inqKarrot); s.src.etc    += clamp0(r.inqEtc);
+    s.inq += clamp0(r.inqWalkin) + clamp0(r.inqPhone) + clamp0(r.inqText)
+           + clamp0(r.inqNaver) + clamp0(r.inqKarrot) + clamp0(r.inqEtc);
+
+    s.wireless += clamp0(r.actWireless); s.wired  += clamp0(r.actWired);
+    s.usim     += clamp0(r.actUsim);     s.rental += clamp0(r.actRental);
+
+    s.act += act;
+    s.lost += lost;
+    s.sales += clamp0(r.sales);
+    s.visitorsRaw += clamp0(r.visitors);
+    s.visitors += vis;
+    if(vis > clamp0(r.visitors)) s.fixed += vis - clamp0(r.visitors);
+    if(r.priceSheet === '완료') s.priceDone++;
+    if(r.lostNote && r.lostNote.trim()) s.notes.push({ date: r.date, text: r.lostNote.trim() });
+  });
+  s.convRate = s.visitors ? Math.round(s.act * 1000 / s.visitors) / 10 : 0;
+  s.perAct   = s.act ? Math.round(s.sales / s.act) : 0;
+  return s;
+}
+
+/* 문의 대비 내방 비율.
+   내방이 문의보다 많으면 문의 칸을 안 채운 것이므로 비율 대신 경고를 띄운다 */
+function inqTag(inq, visitors){
+  if(!inq || visitors > inq) return '<span class="tag tag-warn">문의 미입력</span>';
+  return Math.round(visitors * 100 / inq) + '%';
+}
+
+// 전환율에 따른 태그
+function convTag(rate, teamRate){
+  if(!rate) return '<span class="tag tag-bad">0%</span>';
+  const cls = rate >= teamRate ? 'tag-good' : (rate >= teamRate * 0.7 ? 'tag-warn' : 'tag-bad');
+  return '<span class="tag ' + cls + '">' + rate + '%</span>';
+}
+
+/* 카톡 보고문 생성 */
+function weeklyKakaoText(rows, team, monday){
+  const L = [];
+  L.push('[주간 매장 보고] ' + weekLabel(monday));
+  L.push('');
+  L.push('■ 전체');
+  L.push('· 매출 ' + fmtWon(team.sales) + ' / 개통 ' + team.act + '건');
+  L.push('· 내방 ' + team.visitors + '명 → 개통 ' + team.act + '건 / 놓친 고객 ' + team.lost + '명');
+  L.push('· 내방 대비 개통 전환율 ' + team.convRate + '%');
+  L.push('· 시세표 완료 ' + team.priceDone + '/' + team.days + '일');
+  L.push('');
+  L.push('■ 매장별 (내방 / 개통 / 놓친 / 전환율 / 매출)');
+  rows.forEach((r, i) => {
+    L.push((i + 1) + ') ' + r.store + '  ' + r.visitors + '명 / ' + r.act + '건 / '
+           + r.lost + '명 / ' + r.convRate + '% / ' + fmtWon(r.sales));
+  });
+  L.push('');
+  L.push('■ 고객 유입경로 (문의 ' + team.inq + '건)');
+  SRC_KEYS.forEach(k => {
+    const v = team.src[k.key];
+    if(!v) return;
+    L.push('· ' + k.label + ' ' + v + '건 (' + Math.round(v * 100 / team.inq) + '%)');
+  });
+  if(team.fixed > 0){
+    L.push('');
+    L.push('※ 내방 인원 미입력분 ' + team.fixed + '명을 보정했습니다.');
+    L.push('   (개통 고객도 내방 고객이므로 개통+놓친 고객 기준)');
+  }
+  return L.join('\n');
+}
+
+/* ===== 주간 보고 화면 ===== */
+async function renderWeekly(){
+  const main = document.getElementById('main');
+  if(!WEEK_MONDAY) WEEK_MONDAY = weekMondayOf(todayStr());
+
+  main.innerHTML = '<section class="card ov-section"><div class="card-head">'
+    + '<h2>🗓 주간 보고 <span class="hint" style="font-weight:500">— ' + weekLabel(WEEK_MONDAY) + '</span></h2>'
+    + '</div><p class="hint">불러오는 중…</p></section>';
+
+  const dates   = weekDates(WEEK_MONDAY);
+  const dateSet = new Set(dates);
+
+  const rows = [];
+  for(const store of STORES){
+    const reports = await loadAllReportsForStore(store);
+    const st = weekStoreStats(reports, dateSet);
+    st.store = store;
+    rows.push(st);
+  }
+
+  const team = {
+    days:0, inq:0, visitors:0, visitorsRaw:0, fixed:0, act:0, wireless:0, wired:0, usim:0, rental:0,
+    lost:0, sales:0, priceDone:0, src:{ walkin:0, phone:0, text:0, naver:0, karrot:0, etc:0 }
+  };
+  rows.forEach(r => {
+    ['days','inq','visitors','visitorsRaw','fixed','act','wireless','wired','usim','rental','lost','sales','priceDone']
+      .forEach(k => { team[k] += r[k]; });
+    SRC_KEYS.forEach(k => { team.src[k.key] += r.src[k.key]; });
+  });
+  team.convRate = team.visitors ? Math.round(team.act * 1000 / team.visitors) / 10 : 0;
+  team.perAct   = team.act ? Math.round(team.sales / team.act) : 0;
+
+  rows.sort((a, b) => b.sales - a.sales);
+
+  const hasData = team.days > 0;
+  const maxSrc  = Math.max(1, ...SRC_KEYS.map(k => team.src[k.key]));
+
+  let html = '';
+
+  html += '<section class="card ov-section">'
+    + '<div class="card-head">'
+    + '<h2>🗓 주간 보고 <span class="hint" style="font-weight:500">— ' + weekLabel(WEEK_MONDAY) + ' (월~일)</span></h2>'
+    + '<div class="btn-row">'
+    + '<button class="btn btn-ghost small" id="wk-prev">← 지난 주</button>'
+    + '<button class="btn btn-outline small" id="wk-this">이번 주</button>'
+    + '<button class="btn btn-ghost small" id="wk-next">다음 주 →</button>'
+    + '<button class="btn btn-primary small" id="wk-copy">📋 카톡 보고문 복사</button>'
+    + '</div></div>';
+
+  if(!hasData){
+    html += '<p class="no-data-note">이 주에는 제출된 일일보고가 없습니다. 다른 주를 선택해 주세요.</p></section>';
+    main.innerHTML = html;
+    bindWeeklyNav(rows, team);
+    return;
+  }
+
+  html += '<div class="kpi-row">'
+    + '<div class="kpi-card"><div class="kpi-num">' + fmtNum(team.sales) + '</div><div class="kpi-label">주간 매출(원)</div></div>'
+    + '<div class="kpi-card"><div class="kpi-num">' + team.act + '</div><div class="kpi-label">개통(건)</div></div>'
+    + '<div class="kpi-card"><div class="kpi-num">' + team.visitors + '</div><div class="kpi-label">내방(명)</div></div>'
+    + '<div class="kpi-card"><div class="kpi-num">' + team.convRate + '%</div><div class="kpi-label">내방 → 개통 전환율</div></div>'
+    + '<div class="kpi-card"><div class="kpi-num">' + team.lost + '</div><div class="kpi-label">놓친 고객(명)</div></div>'
+    + '</div>';
+
+  if(team.fixed > 0){
+    html += '<p class="note-flag">내방 인원 미입력분 <b>' + team.fixed + '명</b>을 보정했습니다. '
+         + '개통한 손님도 매장에 온 손님이므로, 내방 칸이 (개통 + 놓친 고객)보다 적게 적힌 날은 그 값으로 올려 잡았습니다. '
+         + '(일일보고 기록 합계 ' + team.visitorsRaw + '명 → 보정 ' + team.visitors + '명)</p>';
+  }
+  html += '</section>';
+
+  html += '<section class="card ov-section">'
+    + '<div class="card-head"><h2>📊 매장별 성적표</h2>'
+    + '<span class="hint">매출 순 · 전환율은 팀 평균 ' + team.convRate + '% 기준</span></div>'
+    + '<div class="table-wrap"><table class="big-table"><thead><tr>'
+    + '<th>순위</th><th>매장</th><th>보고</th><th>문의</th><th>내방</th><th>개통</th>'
+    + '<th>놓친</th><th>전환율</th><th>매출</th><th>1건당</th><th>시세표</th>'
+    + '</tr></thead><tbody>';
+
+  rows.forEach((r, i) => {
+    html += '<tr>'
+      + '<td><span class="rank-chip">' + (i + 1) + '</span></td>'
+      + '<td class="store-name">' + esc(r.store) + '</td>'
+      + '<td>' + r.days + '일</td>'
+      + '<td>' + r.inq + '</td>'
+      + '<td>' + r.visitors + '</td>'
+      + '<td><b>' + r.act + '</b></td>'
+      + '<td>' + (r.lost > r.act ? '<b class="danger">' + r.lost + '</b>' : r.lost) + '</td>'
+      + '<td>' + convTag(r.convRate, team.convRate) + '</td>'
+      + '<td>' + fmtNum(r.sales) + '</td>'
+      + '<td>' + fmtNum(r.perAct) + '</td>'
+      + '<td>' + r.priceDone + '/' + r.days + '</td>'
+      + '</tr>';
+  });
+
+  html += '<tr class="total-row">'
+    + '<td></td><td>합계</td><td>' + team.days + '일</td><td>' + team.inq + '</td>'
+    + '<td>' + team.visitors + '</td><td>' + team.act + '</td><td>' + team.lost + '</td>'
+    + '<td>' + team.convRate + '%</td><td>' + fmtNum(team.sales) + '</td>'
+    + '<td>' + fmtNum(team.perAct) + '</td><td>' + team.priceDone + '/' + team.days + '</td>'
+    + '</tr></tbody></table></div>';
+
+  html += '<div class="table-wrap" style="margin-top:14px"><table class="big-table"><thead><tr>'
+    + '<th>매장</th><th>무선</th><th>유선</th><th>유심</th><th>렌탈</th><th>개통 합계</th>'
+    + '</tr></thead><tbody>';
+  rows.forEach(r => {
+    html += '<tr><td class="store-name">' + esc(r.store) + '</td>'
+      + '<td>' + r.wireless + '</td><td>' + r.wired + '</td>'
+      + '<td>' + r.usim + '</td><td>' + r.rental + '</td><td><b>' + r.act + '</b></td></tr>';
+  });
+  html += '<tr class="total-row"><td>합계</td><td>' + team.wireless + '</td><td>' + team.wired + '</td>'
+    + '<td>' + team.usim + '</td><td>' + team.rental + '</td><td>' + team.act + '</td></tr>'
+    + '</tbody></table></div></section>';
+
+  html += '<section class="card ov-section">'
+    + '<div class="card-head"><h2>📥 고객 유입경로</h2>'
+    + '<span class="hint">이번 주 문의 ' + team.inq + '건 기준</span></div>';
+
+  if(team.inq === 0){
+    html += '<p class="no-data-note">이번 주 문의량 입력이 없습니다. 일일보고 문의량 칸을 채우면 유입경로가 집계됩니다.</p>';
+  } else {
+    html += '<div class="lost-bars">';
+    SRC_KEYS.forEach(k => {
+      const v = team.src[k.key];
+      const pct = Math.round(v * 100 / team.inq);
+      html += '<div class="lost-bar-row">'
+        + '<div class="lost-bar-label">' + k.label + '</div>'
+        + '<div class="lost-bar-track"><div class="lost-bar-fill" style="width:' + Math.round(v * 100 / maxSrc) + '%"></div></div>'
+        + '<div class="lost-bar-val">' + v + '건 (' + pct + '%)</div>'
+        + '</div>';
+    });
+    html += '</div>';
+
+    html += '<div class="table-wrap" style="margin-top:14px"><table class="big-table"><thead><tr><th>매장</th>';
+    SRC_KEYS.forEach(k => { html += '<th>' + k.label + '</th>'; });
+    html += '<th>문의 합계</th><th>내방</th><th>문의 → 내방</th></tr></thead><tbody>';
+    rows.forEach(r => {
+      html += '<tr><td class="store-name">' + esc(r.store) + '</td>';
+      SRC_KEYS.forEach(k => { html += '<td>' + r.src[k.key] + '</td>'; });
+      html += '<td><b>' + r.inq + '</b></td><td>' + r.visitors + '</td>'
+        + '<td>' + inqTag(r.inq, r.visitors) + '</td></tr>';
+    });
+    html += '<tr class="total-row"><td>합계</td>';
+    SRC_KEYS.forEach(k => { html += '<td>' + team.src[k.key] + '</td>'; });
+    html += '<td>' + team.inq + '</td><td>' + team.visitors + '</td>'
+      + '<td>' + inqTag(team.inq, team.visitors) + '</td></tr>';
+    html += '</tbody></table></div>';
+
+    html += '<p class="lost-advice">「문의 미입력」은 내방 인원이 문의 건수보다 많게 잡힌 매장입니다. '
+         + '문의 칸을 채우지 않고 내방·개통만 적으면 손님이 어느 경로로 왔는지 알 수 없습니다. '
+         + '유입경로별 문의가 실제 내방으로 얼마나 이어지는지 보려면 문의량 칸을 경로별로 빠짐없이 입력해야 합니다.</p>';
+  }
+  html += '</section>';
+
+  main.innerHTML = html;
+  bindWeeklyNav(rows, team);
+}
+
+// 주 이동 버튼 · 카톡 복사 버튼 연결
+function bindWeeklyNav(rows, team){
+  const prev = document.getElementById('wk-prev');
+  const cur  = document.getElementById('wk-this');
+  const next = document.getElementById('wk-next');
+  const copy = document.getElementById('wk-copy');
+  if(prev) prev.onclick = () => { WEEK_MONDAY = weekShift(WEEK_MONDAY, -1); renderWeekly(); };
+  if(cur)  cur.onclick  = () => { WEEK_MONDAY = weekMondayOf(todayStr()); renderWeekly(); };
+  if(next) next.onclick = () => { WEEK_MONDAY = weekShift(WEEK_MONDAY, 1); renderWeekly(); };
+  if(copy) copy.onclick = async () => {
+    const text = weeklyKakaoText(rows, team, WEEK_MONDAY);
+    try{
+      await navigator.clipboard.writeText(text);
+      toast('카톡 보고문을 복사했습니다');
+    }catch(e){
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.cssText = 'position:fixed;left:-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      ta.remove();
+      toast('카톡 보고문을 복사했습니다');
+    }
+  };
+}
+
+
 function renderTabs(){
   const wrap = document.getElementById('tabs');
   wrap.innerHTML = '';
@@ -940,6 +1257,12 @@ function renderTabs(){
   ov.textContent = '전체 개요';
   ov.onclick = () => selectTab('__overview__');
   wrap.appendChild(ov);
+
+  const wk = document.createElement('button');
+  wk.className = 'tab' + (CURRENT === '__weekly__' ? ' active' : '');
+  wk.textContent = '주간 보고';
+  wk.onclick = () => selectTab('__weekly__');
+  wrap.appendChild(wk);
 
   STORES.forEach(store => {
     const b = document.createElement('button');
@@ -978,6 +1301,7 @@ function selectTab(store){
   CURRENT = store;
   renderTabs();
   if(store === '__overview__') renderOverview();
+  else if(store === '__weekly__') renderWeekly();
   else renderStoreView(store);
 }
 
